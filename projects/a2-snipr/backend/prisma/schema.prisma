@@ -1,0 +1,40 @@
+// Snipr data model.
+// Two tables: links (the short-code -> target mapping, with a denormalized
+// click_count for cheap dashboard reads) and clicks (one row per recorded
+// visit, the source of truth for time-series analytics).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Link {
+  id         Int       @id @default(autoincrement())
+  code       String    @unique
+  targetUrl  String    @map("target_url")
+  isCustom   Boolean   @default(false) @map("is_custom")
+  isActive   Boolean   @default(true) @map("is_active")
+  clickCount Int       @default(0) @map("click_count")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  expiresAt  DateTime? @map("expires_at")
+  clicks     Click[]
+
+  @@map("links")
+}
+
+model Click {
+  id       Int      @id @default(autoincrement())
+  linkId   Int      @map("link_id")
+  link     Link     @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  ts       DateTime @default(now())
+  referrer String?
+  country  String?
+  uaHash   String?  @map("ua_hash")
+
+  @@index([linkId, ts])
+  @@map("clicks")
+}
