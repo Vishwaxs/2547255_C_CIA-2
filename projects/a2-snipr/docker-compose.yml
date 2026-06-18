@@ -1,0 +1,46 @@
+# Local development infrastructure for Snipr.
+# Brings up the two stateful dependencies (Postgres + Redis) that the backend needs.
+# The app services (backend, frontend) are added in docker-compose.full.yml so that
+# day-to-day dev can run the Node processes on the host against these containers.
+#
+#   docker compose up -d        # start postgres + redis
+#   docker compose down         # stop
+#   docker compose down -v      # stop and wipe data
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: snipr-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: snipr
+      POSTGRES_PASSWORD: snipr
+      POSTGRES_DB: snipr
+    ports:
+      - "5432:5432"
+    volumes:
+      - snipr-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U snipr -d snipr"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: snipr-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - snipr-redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  snipr-pgdata:
+  snipr-redisdata:
