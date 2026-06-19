@@ -1,0 +1,64 @@
+// QAForge data model
+// Suite → TestCase (1:N)   Run → RunResult (1:N)   TestCase → RunResult (1:N)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Suite {
+  id          String     @id @default(cuid())
+  name        String
+  description String     @default("")
+  baseUrl     String
+  timeoutMs   Int        @default(10000)
+  createdAt   DateTime   @default(now())
+  cases       TestCase[]
+  runs        Run[]
+}
+
+model TestCase {
+  id         String      @id @default(cuid())
+  suiteId    String
+  suite      Suite       @relation(fields: [suiteId], references: [id], onDelete: Cascade)
+  name       String
+  method     String      @default("GET")
+  path       String
+  headers    Json        @default("{}")
+  body       Json?
+  assertions Json        @default("[]")
+  createdAt  DateTime    @default(now())
+  results    RunResult[]
+}
+
+model Run {
+  id           String      @id @default(cuid())
+  suiteId      String
+  suite        Suite       @relation(fields: [suiteId], references: [id], onDelete: Cascade)
+  triggeredBy  String      @default("manual")
+  startedAt    DateTime    @default(now())
+  completedAt  DateTime?
+  totalTests   Int         @default(0)
+  passed       Int         @default(0)
+  failed       Int         @default(0)
+  results      RunResult[]
+}
+
+model RunResult {
+  id         String   @id @default(cuid())
+  runId      String
+  run        Run      @relation(fields: [runId], references: [id], onDelete: Cascade)
+  testCaseId String
+  testCase   TestCase @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+  status     String   // "pass" | "fail"
+  durationMs Int
+  statusCode Int?
+  failReason String?
+  createdAt  DateTime @default(now())
+
+  @@index([testCaseId, runId])
+}
