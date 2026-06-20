@@ -1,0 +1,39 @@
+# Dev infra only: Postgres + Redis.
+# Run backend and frontend on the host with `npm run dev`.
+# For the full stack in Docker, use docker-compose.full.yml.
+#
+#   docker compose up -d
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: syncbridge
+      POSTGRES_PASSWORD: syncbridge
+      POSTGRES_DB: syncbridge
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U syncbridge -d syncbridge"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "5434:5432"
+    volumes:
+      - syncbridge-pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    ports:
+      - "6381:6379"
+    volumes:
+      - syncbridge-redisdata:/data
+
+volumes:
+  syncbridge-pgdata:
+  syncbridge-redisdata:
