@@ -14,7 +14,7 @@ and is built MVP-first, one phase per commit.
 | A2 | **Snipr** — URL shortener + analytics | [`projects/a2-snipr`](projects/a2-snipr) | Caching strategy · read-heavy design · time-series analytics · rate limiting as system design | ✅ MVP |
 | B1 | **QAForge** — API test orchestrator + flaky detection | [`projects/b1-qaforge`](projects/b1-qaforge) | Test execution engine · statistical flakiness scoring · test analytics over historical runs | ✅ MVP |
 | C1 | **SyncBridge** — integration hub (iPaaS-lite) | [`projects/c1-syncbridge`](projects/c1-syncbridge) | Connecting multiple systems · declarative field-mapping/transform layer · idempotent sync with conflict resolution · per-record audit log | ✅ MVP |
-| D1 | **RAG** — retrieval-augmented Q&A over your docs | [`projects/d1-rag`](projects/d1-rag) | Document chunking · vector embeddings · cosine-kNN retrieval · grounded generation with citations · refuse-when-not-found faithfulness | 🚧 WIP |
+| D1 | **RAG** — retrieval-augmented Q&A over your docs | [`projects/d1-rag`](projects/d1-rag) | Document chunking · vector embeddings · cosine-kNN retrieval · grounded generation with citations · refuse-when-not-found faithfulness | ✅ MVP |
 
 More projects from the catalog will be added one at a time (E3 InsightDeck,
 A1 PulseBoard, A3 Hooky, …). See the per-project README for build details.

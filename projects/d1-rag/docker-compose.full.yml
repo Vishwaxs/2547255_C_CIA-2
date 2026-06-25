@@ -1,0 +1,66 @@
+# Full local stack for D1 RAG: Postgres + Redis + backend + frontend.
+# Use this when a Docker daemon is available:
+#
+#   docker compose -f docker-compose.full.yml up --build
+#
+#   frontend  -> http://localhost:8083
+#   backend   -> http://localhost:4003
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: d1rag
+      POSTGRES_PASSWORD: d1rag
+      POSTGRES_DB: d1rag
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U d1rag -d d1rag"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - d1rag-pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - d1rag-redisdata:/data
+
+  backend:
+    build: ./backend
+    environment:
+      NODE_ENV: production
+      PORT: 4003
+      PUBLIC_BASE_URL: http://localhost:4003
+      DATABASE_URL: postgresql://d1rag:d1rag@postgres:5432/d1rag?schema=public
+      REDIS_URL: redis://redis:6379
+      CORS_ORIGIN: http://localhost:8083
+      EMBEDDER_KIND: tfidf
+      GENERATOR_KIND: extractive
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "4003:4003"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:4003
+    depends_on:
+      - backend
+    ports:
+      - "8083:80"
+
+volumes:
+  d1rag-pgdata:
+  d1rag-redisdata:
