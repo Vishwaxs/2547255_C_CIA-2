@@ -48,12 +48,26 @@ export function chunkText(text: string, opts: ChunkOptions = DEFAULT_CHUNK_OPTIO
   return chunks;
 }
 
-// Cheap whitespace tokenizer, shared by the chunker (token counts) and the embedders.
+// A small English stopword list. Dropping these is standard IR preprocessing: they
+// appear almost everywhere, carry no retrieval signal, and otherwise create false
+// similarity (e.g. an off-topic question matching the corpus only on "how"/"is"/"the"),
+// which would defeat the grounded-refusal guarantee.
+const STOPWORDS = new Set([
+  'a', 'an', 'and', 'are', 'as', 'at', 'be', 'been', 'but', 'by', 'can', 'did', 'do',
+  'does', 'for', 'from', 'had', 'has', 'have', 'how', 'i', 'if', 'in', 'into', 'is',
+  'it', 'its', 'may', 'me', 'my', 'no', 'not', 'of', 'on', 'or', 'so', 'than', 'that',
+  'the', 'their', 'them', 'then', 'there', 'these', 'they', 'this', 'to', 'too', 'up',
+  'was', 'we', 'were', 'what', 'when', 'where', 'which', 'who', 'why', 'will', 'with',
+  'you', 'your',
+]);
+
+// Lowercase, split on non-alphanumerics, drop stopwords. Shared by the chunker
+// (token counts) and the embedders so retrieval and generation see the same tokens.
 export function tokenize(text: string): string[] {
   return text
     .toLowerCase()
     .split(/[^a-z0-9]+/)
-    .filter((t) => t.length > 0);
+    .filter((t) => t.length > 0 && !STOPWORDS.has(t));
 }
 
 export function tokenCount(text: string): number {
