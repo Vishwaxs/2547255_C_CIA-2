@@ -1,0 +1,78 @@
+// D1 RAG data model — retrieval-augmented Q&A over a document corpus.
+//
+//   Document ──► Chunk[]        (text split into overlapping windows, each embedded)
+//   Query ──► Retrieval[]       (per-query audit: which chunks were retrieved, scored,
+//                                ranked, and which were actually cited in the answer)
+//
+// Embeddings live in a JSON column and cosine-kNN runs in Node — portable and
+// verifiable with no Postgres extension. pgvector is the documented scale path.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Document {
+  id          String   @id @default(cuid())
+  title       String
+  source      String // "upload" | "paste" | "seed"
+  contentHash String // sha256 of the raw text — dedupes re-uploads and feeds corpusVersion
+  charCount   Int
+  chunkCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+  chunks      Chunk[]
+
+  @@index([contentHash])
+}
+
+model Chunk {
+  id          String   @id @default(cuid())
+  documentId  String
+  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  index       Int // position of this chunk within its document
+  text        String
+  charStart   Int
+  charEnd     Int
+  embedding   Json // number[] — produced by the configured Embedder
+  embedderKind String // which embedder produced this vector (guards against mismatched queries)
+  dimension   Int // vector length
+  tokenCount  Int
+  retrievals  Retrieval[]
+
+  @@index([documentId])
+}
+
+model Query {
+  id            String      @id @default(cuid())
+  question      String
+  answer        String
+  refused       Boolean     @default(false) // true when retrieval found nothing above threshold
+  cacheHit      Boolean     @default(false)
+  topScore      Float? // best retrieval score (null when corpus empty)
+  topK          Int
+  threshold     Float
+  latencyMs     Int
+  embedderKind  String
+  generatorKind String
+  createdAt     DateTime    @default(now())
+  retrievals    Retrieval[]
+
+  @@index([createdAt])
+}
+
+model Retrieval {
+  id      String  @id @default(cuid())
+  queryId String
+  query   Query   @relation(fields: [queryId], references: [id], onDelete: Cascade)
+  chunkId String
+  chunk   Chunk   @relation(fields: [chunkId], references: [id], onDelete: Cascade)
+  score   Float
+  rank    Int // 1-based position in the retrieval ranking
+  cited   Boolean @default(false) // did this chunk actually contribute to the answer?
+
+  @@index([queryId])
+}
