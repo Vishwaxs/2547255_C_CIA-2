@@ -39,3 +39,7 @@ Thumbs.db
 
 # Docker volumes (local)
 .data/
+
+# Python caches (skill scripts)
+__pycache__/
+*.pyc
