@@ -4,6 +4,7 @@ import { prisma } from '../lib/prisma';
 import { validateBody } from '../middleware/validate';
 import { HttpError } from '../middleware/errorHandler';
 import { ingestDataset, deleteDataset, seedDataset } from '../services/dataset.service';
+import { generateDeck } from '../services/deck.service';
 
 export const datasetsRouter = Router();
 
@@ -90,6 +91,37 @@ datasetsRouter.get(
         columns: dataset.columns,
         sampleRows: rows.slice(0, 20),
       });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// POST /api/datasets/:id/generate — run the detectors and build an insight deck.
+datasetsRouter.post(
+  '/:id/generate',
+  async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+    try {
+      const deck = await generateDeck(req.params.id);
+      res.status(201).json(deck);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// GET /api/datasets/:id/deck — the most recent deck for a dataset (404 if none yet).
+datasetsRouter.get(
+  '/:id/deck',
+  async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+    try {
+      const deck = await prisma.deck.findFirst({
+        where: { datasetId: req.params.id },
+        orderBy: { generatedAt: 'desc' },
+        include: { insights: { orderBy: { rank: 'asc' } } },
+      });
+      if (!deck) throw new HttpError(404, 'No deck generated yet');
+      res.json(deck);
     } catch (err) {
       next(err);
     }
