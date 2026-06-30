@@ -11,7 +11,7 @@ export function buildSeedCsv(): string {
     const date = new Date(start + i * week).toISOString().slice(0, 10);
     const region = regions[i % regions.length];
     const category = categories[i % categories.length];
-    const units = 10 + (i % 12) * 2;
+    const units = 10 + i; // monotonic so units correlates with revenue
     let revenue = units * 25 + i * 30; // upward trend, correlated with units
     if (i === 23) revenue = 9999; // planted outlier
     lines.push(`${date},${region},${category},${units},${revenue}`);
