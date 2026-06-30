@@ -15,9 +15,11 @@ under `projects/`, and ships with its own `README.md` and `DECISIONS.md`.
 | A2 | **Snipr** — URL shortener + analytics | `projects/a2-snipr` | ✅ MVP |
 | B1 | **QAForge** — API test orchestrator + flaky detection | `projects/b1-qaforge` | ✅ MVP |
 | C1 | **SyncBridge** — integration hub (iPaaS-lite) | `projects/c1-syncbridge` | ✅ MVP |
+| D1 | **RAG** — retrieval-augmented Q&A over your docs | `projects/d1-rag` | ✅ MVP |
+| E3 | **InsightDeck** — auto-insight generator from CSV | `projects/e3-insightdeck` | 🚧 WIP |
 
-More projects get added **one at a time** (D1 RAG, E3 InsightDeck, A1 PulseBoard,
-…). Always check the per-project `README.md` and `DECISIONS.md` before working in
+More projects get added **one at a time** (A1 PulseBoard, A3 Hooky,
+C2 TargetX, …). Always check the per-project `README.md` and `DECISIONS.md` before working in
 a project folder.
 
 ## Available skills (use these)

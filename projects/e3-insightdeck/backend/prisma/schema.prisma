@@ -1,0 +1,73 @@
+// E3 InsightDeck data model — automated exploratory data analysis.
+//
+//   Dataset ──► Column[]   (one profile per column: inferred type + stats)
+//   Dataset ──► Deck[]      (a generation run) ──► Insight[]  (ranked findings + charts)
+//
+// Raw rows live in a Json column and all analysis runs in Node — portable and
+// verifiable with no extension. A columnar store / DuckDB is the documented scale path.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Dataset {
+  id          String   @id @default(cuid())
+  name        String
+  source      String // "upload" | "paste" | "seed"
+  contentHash String // sha256 of the raw CSV — dedupes re-uploads, keys the deck cache
+  rowCount    Int
+  columnCount Int
+  rows        Json // the parsed rows (array of objects) — MVP storage
+  createdAt   DateTime @default(now())
+  columns     Column[]
+  decks       Deck[]
+
+  @@index([contentHash])
+}
+
+model Column {
+  id            String   @id @default(cuid())
+  datasetId     String
+  dataset       Dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  name          String
+  index         Int
+  inferredType  String // numeric | categorical | datetime | boolean | text
+  nullCount     Int
+  distinctCount Int
+  stats         Json // type-specific profile (min/max/mean/median/stddev or top values)
+
+  @@index([datasetId])
+}
+
+model Deck {
+  id           String    @id @default(cuid())
+  datasetId    String
+  dataset      Dataset   @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  generatedAt  DateTime  @default(now())
+  insightCount Int
+  narratorKind String
+  insights     Insight[]
+
+  @@index([datasetId])
+}
+
+model Insight {
+  id        String  @id @default(cuid())
+  deckId    String
+  deck      Deck    @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  type      String // trend | top_categories | outliers | correlation | distribution | dominant_category | missingness | segment_vs_average
+  title     String // the plain-English headline
+  score     Float // interestingness (drives ranking)
+  chartType String // line | bar | scatter | histogram
+  chartSpec Json // pre-aggregated data + encoding for the frontend chart
+  detail    Json // supporting numbers
+  columns   Json // columns involved (string[])
+  rank      Int // 1-based position in the deck
+
+  @@index([deckId])
+}
