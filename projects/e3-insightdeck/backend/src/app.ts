@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { env } from './config/env';
 import { healthRouter } from './routes/health.routes';
+import { datasetsRouter } from './routes/datasets.routes';
 import { notFound, errorHandler } from './middleware/errorHandler';
 
 export function createApp(): express.Express {
@@ -12,6 +13,7 @@ export function createApp(): express.Express {
   app.use(express.json({ limit: '8mb' }));
 
   app.use('/healthz', healthRouter);
+  app.use('/api/datasets', datasetsRouter);
   app.use(notFound);
   app.use(errorHandler);
   return app;
