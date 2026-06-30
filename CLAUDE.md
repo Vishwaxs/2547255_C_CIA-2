@@ -16,7 +16,7 @@ under `projects/`, and ships with its own `README.md` and `DECISIONS.md`.
 | B1 | **QAForge** — API test orchestrator + flaky detection | `projects/b1-qaforge` | ✅ MVP |
 | C1 | **SyncBridge** — integration hub (iPaaS-lite) | `projects/c1-syncbridge` | ✅ MVP |
 | D1 | **RAG** — retrieval-augmented Q&A over your docs | `projects/d1-rag` | ✅ MVP |
-| E3 | **InsightDeck** — auto-insight generator from CSV | `projects/e3-insightdeck` | 🚧 WIP |
+| E3 | **InsightDeck** — auto-insight generator from CSV | `projects/e3-insightdeck` | ✅ MVP |
 
 More projects get added **one at a time** (A1 PulseBoard, A3 Hooky,
 C2 TargetX, …). Always check the per-project `README.md` and `DECISIONS.md` before working in
