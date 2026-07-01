@@ -16,7 +16,7 @@ and is built MVP-first, one phase per commit.
 | C1 | **SyncBridge** — integration hub (iPaaS-lite) | [`projects/c1-syncbridge`](projects/c1-syncbridge) | Connecting multiple systems · declarative field-mapping/transform layer · idempotent sync with conflict resolution · per-record audit log | ✅ MVP |
 | D1 | **RAG** — retrieval-augmented Q&A over your docs | [`projects/d1-rag`](projects/d1-rag) | Document chunking · vector embeddings · cosine-kNN retrieval · grounded generation with citations · refuse-when-not-found faithfulness | ✅ MVP |
 | E3 | **InsightDeck** — auto-insight generator from CSV | [`projects/e3-insightdeck`](projects/e3-insightdeck) | CSV type-inference · column profiling · statistical insight detectors (trend · outliers · correlation · …) · automatic chart selection · interestingness ranking | ✅ MVP |
-| A1 | **PulseBoard** — real-time metrics dashboard | [`projects/a1-pulseboard`](projects/a1-pulseboard) | Real-time streaming (Server-Sent Events) · Redis sliding-window aggregation · threshold alerting · live time-series + event simulator | 🚧 WIP |
+| A1 | **PulseBoard** — real-time metrics dashboard | [`projects/a1-pulseboard`](projects/a1-pulseboard) | Real-time streaming (Server-Sent Events) · Redis sliding-window aggregation · threshold alerting · live time-series + event simulator | ✅ MVP |
 
 More projects from the catalog will be added one at a time (A3 Hooky,
 C2 TargetX, D2 AgentDesk, …). See the per-project README for build details.

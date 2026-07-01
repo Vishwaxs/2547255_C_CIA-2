@@ -17,7 +17,7 @@ under `projects/`, and ships with its own `README.md` and `DECISIONS.md`.
 | C1 | **SyncBridge** — integration hub (iPaaS-lite) | `projects/c1-syncbridge` | ✅ MVP |
 | D1 | **RAG** — retrieval-augmented Q&A over your docs | `projects/d1-rag` | ✅ MVP |
 | E3 | **InsightDeck** — auto-insight generator from CSV | `projects/e3-insightdeck` | ✅ MVP |
-| A1 | **PulseBoard** — real-time metrics dashboard | `projects/a1-pulseboard` | 🚧 WIP |
+| A1 | **PulseBoard** — real-time metrics dashboard | `projects/a1-pulseboard` | ✅ MVP |
 
 More projects get added **one at a time** (A1 PulseBoard, A3 Hooky,
 C2 TargetX, …). Always check the per-project `README.md` and `DECISIONS.md` before working in
