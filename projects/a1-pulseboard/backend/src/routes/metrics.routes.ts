@@ -4,6 +4,7 @@ import { prisma } from '../lib/prisma';
 import { validateBody } from '../middleware/validate';
 import { snapshot } from '../services/aggregate.service';
 import { seedMetrics } from '../services/seed.service';
+import { HttpError } from '../middleware/errorHandler';
 
 export const metricsRouter = Router();
 
@@ -54,6 +55,33 @@ metricsRouter.post('/seed', async (_req: Request, res: Response, next: NextFunct
 metricsRouter.get('/', async (_req: Request, res: Response, next: NextFunction) => {
   try {
     res.json(await snapshot());
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/metrics/:name/series — the per-minute historical buckets for a metric.
+metricsRouter.get('/:name/series', async (req, res, next) => {
+  try {
+    const metric = await prisma.metric.findUnique({ where: { name: req.params.name } });
+    if (!metric) return next(new HttpError(404, 'Metric not found'));
+    const buckets = await prisma.bucket.findMany({
+      where: { metricId: metric.id },
+      orderBy: { minute: 'asc' },
+      take: 120,
+    });
+    res.json({
+      metric: metric.name,
+      unit: metric.unit,
+      buckets: buckets.map((b) => ({
+        minute: b.minute,
+        count: b.count,
+        sum: b.sum,
+        min: b.min,
+        max: b.max,
+        avg: b.count ? b.sum / b.count : 0,
+      })),
+    });
   } catch (err) {
     next(err);
   }
