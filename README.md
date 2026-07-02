@@ -17,7 +17,7 @@ and is built MVP-first, one phase per commit.
 | D1 | **RAG** — retrieval-augmented Q&A over your docs | [`projects/d1-rag`](projects/d1-rag) | Document chunking · vector embeddings · cosine-kNN retrieval · grounded generation with citations · refuse-when-not-found faithfulness | ✅ MVP |
 | E3 | **InsightDeck** — auto-insight generator from CSV | [`projects/e3-insightdeck`](projects/e3-insightdeck) | CSV type-inference · column profiling · statistical insight detectors (trend · outliers · correlation · …) · automatic chart selection · interestingness ranking | ✅ MVP |
 | A1 | **PulseBoard** — real-time metrics dashboard | [`projects/a1-pulseboard`](projects/a1-pulseboard) | Real-time streaming (Server-Sent Events) · Redis sliding-window aggregation · threshold alerting · live time-series + event simulator | ✅ MVP |
-| A3 | **Hooky** — webhook gateway / dispatcher | [`projects/a3-hooky`](projects/a3-hooky) | Reliable webhook delivery · HMAC signing · retry with exponential backoff · dead-letter + replay · per-attempt delivery log | 🚧 WIP |
+| A3 | **Hooky** — webhook gateway / dispatcher | [`projects/a3-hooky`](projects/a3-hooky) | Reliable webhook delivery · HMAC signing · retry with exponential backoff · dead-letter + replay · per-attempt delivery log | ✅ MVP |
 
 More projects from the catalog will be added one at a time (C2 TargetX,
 D2 AgentDesk, D3 EvalForge, …). See the per-project README for build details.
