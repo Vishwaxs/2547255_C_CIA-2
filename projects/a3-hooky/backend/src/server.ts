@@ -6,8 +6,12 @@ import { redis } from './lib/redis';
 
 const app = createApp();
 
-// The dispatcher loop is started here (gated by START_WORKER) once it exists — wired in a
-// later phase. Tests set START_WORKER=false and drive processDue() directly.
+let dispatchTimer: NodeJS.Timeout | null = null;
+if (env.START_WORKER) {
+  // Started only outside tests (START_WORKER=false), which drive processDue() directly.
+  const { startDispatcher } = require('./jobs/dispatcher.job') as typeof import('./jobs/dispatcher.job');
+  dispatchTimer = startDispatcher();
+}
 
 const server = app.listen(env.PORT, () => {
   console.log(`[hooky] listening on :${env.PORT} (worker=${env.START_WORKER}, transport=${env.TRANSPORT})`);
@@ -16,6 +20,7 @@ const server = app.listen(env.PORT, () => {
 async function shutdown() {
   console.log('[hooky] shutting down');
   server.close(async () => {
+    if (dispatchTimer) clearInterval(dispatchTimer);
     await prisma.$disconnect().catch(() => undefined);
     redis.disconnect();
     process.exit(0);

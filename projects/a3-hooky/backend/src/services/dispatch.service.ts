@@ -7,6 +7,7 @@ import { transportFor } from '../transport/transportFactory';
 import { DeliveryTransport } from '../transport/transport';
 import { matchingSubscriptions } from './subscription.service';
 import { HttpError } from '../middleware/errorHandler';
+import { redis } from '../lib/redis';
 
 // Publish an event: persist it, then fan out one Delivery (status=pending, due now) per
 // active subscription whose event-type list matches.
@@ -14,7 +15,17 @@ export async function publishEvent(input: {
   type: string;
   payload: Record<string, unknown>;
   idempotencyKey?: string;
-}): Promise<{ event: Event; deliveryCount: number }> {
+}): Promise<{ event: Event; deliveryCount: number; deduped: boolean }> {
+  // Fail-open idempotency: a repeated idempotencyKey returns the original event without
+  // re-fanning-out. A Redis outage simply disables dedupe.
+  const idemKey = input.idempotencyKey ? `hooky:idem:${input.idempotencyKey}` : null;
+  if (idemKey) {
+    const cachedId = await redis.get(idemKey).catch(() => null);
+    if (cachedId) {
+      const existing = await prisma.event.findUnique({ where: { id: cachedId } });
+      if (existing) return { event: existing, deliveryCount: 0, deduped: true };
+    }
+  }
   const event = await prisma.event.create({
     data: {
       type: input.type,
@@ -28,7 +39,10 @@ export async function publishEvent(input: {
       data: { eventId: event.id, subscriptionId: s.id, status: 'pending', nextAttemptAt: new Date() },
     });
   }
-  return { event, deliveryCount: subs.length };
+  if (idemKey) {
+    await redis.set(idemKey, event.id, 'EX', env.IDEMPOTENCY_TTL_SECONDS).catch(() => undefined);
+  }
+  return { event, deliveryCount: subs.length, deduped: false };
 }
 
 type DueDelivery = Delivery & {

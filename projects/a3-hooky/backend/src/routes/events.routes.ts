@@ -16,7 +16,7 @@ eventsRouter.post('/', validateBody(publishSchema), async (req: Request, res: Re
   try {
     const body = req.body as z.infer<typeof publishSchema>;
     const result = await publishEvent(body);
-    res.status(202).json({ eventId: result.event.id, deliveries: result.deliveryCount });
+    res.status(202).json({ eventId: result.event.id, deliveries: result.deliveryCount, deduped: result.deduped });
   } catch (err) {
     next(err);
   }
