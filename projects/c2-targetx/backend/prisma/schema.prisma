@@ -1,0 +1,56 @@
+// C2 TargetX data model — a feature-flag / targeting engine.
+//
+//   Flag (variations + fallthrough + off) ──► Rule[]  (ordered targeting rules)
+//   Flag ──► Exposure[]  (one per evaluation, for experiment analytics)
+//
+// Evaluation is a pure function of (flag, rules, context); nothing external is called.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Flag {
+  id              String     @id @default(cuid())
+  key             String     @unique
+  name            String
+  description     String?
+  enabled         Boolean    @default(true)
+  variations      Json // [{ key, value }]
+  fallthrough     Json // { variationKey } | { rollout: [{ variationKey, weight }] }
+  offVariationKey String
+  createdAt       DateTime   @default(now())
+  rules           Rule[]
+  exposures       Exposure[]
+
+  @@index([key])
+}
+
+model Rule {
+  id          String @id @default(cuid())
+  flagId      String
+  flag        Flag   @relation(fields: [flagId], references: [id], onDelete: Cascade)
+  order       Int // evaluation order; first matching rule wins
+  description String?
+  conditions  Json // [{ attribute, op, values }] — AND-combined
+  serve       Json // { variationKey } | { rollout: [{ variationKey, weight }] }
+
+  @@index([flagId, order])
+}
+
+model Exposure {
+  id           String   @id @default(cuid())
+  flagId       String
+  flag         Flag     @relation(fields: [flagId], references: [id], onDelete: Cascade)
+  unitKey      String
+  variationKey String
+  reason       String
+  ruleOrder    Int?
+  ts           DateTime @default(now())
+
+  @@index([flagId, ts])
+}

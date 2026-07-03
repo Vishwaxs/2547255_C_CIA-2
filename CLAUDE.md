@@ -19,6 +19,7 @@ under `projects/`, and ships with its own `README.md` and `DECISIONS.md`.
 | E3 | **InsightDeck** — auto-insight generator from CSV | `projects/e3-insightdeck` | ✅ MVP |
 | A1 | **PulseBoard** — real-time metrics dashboard | `projects/a1-pulseboard` | ✅ MVP |
 | A3 | **Hooky** — webhook gateway / dispatcher | `projects/a3-hooky` | ✅ MVP |
+| C2 | **TargetX** — feature flags + targeting engine | `projects/c2-targetx` | 🚧 WIP |
 
 More projects get added **one at a time** (A1 PulseBoard, A3 Hooky,
 C2 TargetX, …). Always check the per-project `README.md` and `DECISIONS.md` before working in
