@@ -3,6 +3,8 @@ import cors from 'cors';
 import { env } from './config/env';
 import { healthRouter } from './routes/health.routes';
 import { flagsRouter } from './routes/flags.routes';
+import { rulesRouter } from './routes/rules.routes';
+import { flagEvaluateRouter, evaluateAllRouter } from './routes/evaluate.routes';
 import { notFound, errorHandler } from './middleware/errorHandler';
 
 export function createApp(): express.Express {
@@ -13,6 +15,9 @@ export function createApp(): express.Express {
 
   app.use('/healthz', healthRouter);
   app.use('/api/flags', flagsRouter);
+  app.use('/api/flags/:key/rules', rulesRouter);
+  app.use('/api/flags/:key/evaluate', flagEvaluateRouter);
+  app.use('/api/evaluate', evaluateAllRouter);
   app.use(notFound);
   app.use(errorHandler);
   return app;
