@@ -4,6 +4,8 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { validateBody } from '../middleware/validate';
 import { HttpError } from '../middleware/errorHandler';
+import { invalidateFlag } from '../services/flag.service';
+import { seedFlags } from '../services/seed.service';
 
 export const flagsRouter = Router();
 
@@ -84,6 +86,7 @@ flagsRouter.patch('/:key', validateBody(patchSchema), async (req: Request<{ key:
       where: { key: req.params.key },
       data: { ...b, fallthrough: b.fallthrough ? (b.fallthrough as Prisma.InputJsonValue) : undefined },
     });
+    await invalidateFlag(req.params.key);
     res.json(flag);
   } catch {
     next(new HttpError(404, 'Flag not found'));
@@ -94,8 +97,19 @@ flagsRouter.patch('/:key', validateBody(patchSchema), async (req: Request<{ key:
 flagsRouter.delete('/:key', async (req: Request<{ key: string }>, res: Response, next: NextFunction) => {
   try {
     await prisma.flag.delete({ where: { key: req.params.key } });
+    await invalidateFlag(req.params.key);
     res.status(204).end();
   } catch {
     next(new HttpError(404, 'Flag not found'));
   }
 });
+
+// POST /api/flags/seed handled via a dedicated path to avoid clashing with :key — mounted
+// separately in app.ts as seedFlagsRouter.
+export async function seedHandler(_req: import('express').Request, res: import('express').Response, next: import('express').NextFunction) {
+  try {
+    res.status(201).json(await seedFlags());
+  } catch (err) {
+    next(err);
+  }
+}

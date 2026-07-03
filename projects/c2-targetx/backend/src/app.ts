@@ -5,6 +5,8 @@ import { healthRouter } from './routes/health.routes';
 import { flagsRouter } from './routes/flags.routes';
 import { rulesRouter } from './routes/rules.routes';
 import { flagEvaluateRouter, evaluateAllRouter } from './routes/evaluate.routes';
+import { statsRouter } from './routes/stats.routes';
+import { seedHandler } from './routes/flags.routes';
 import { notFound, errorHandler } from './middleware/errorHandler';
 
 export function createApp(): express.Express {
@@ -14,6 +16,8 @@ export function createApp(): express.Express {
   app.use(express.json({ limit: '512kb' }));
 
   app.use('/healthz', healthRouter);
+  app.post('/api/flags/seed', seedHandler);
+  app.use('/api/flags/:key/stats', statsRouter);
   app.use('/api/flags', flagsRouter);
   app.use('/api/flags/:key/rules', rulesRouter);
   app.use('/api/flags/:key/evaluate', flagEvaluateRouter);

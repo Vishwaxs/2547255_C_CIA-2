@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { validateBody } from '../middleware/validate';
 import { HttpError } from '../middleware/errorHandler';
+import { invalidateFlag } from '../services/flag.service';
 
 // Mounted at /api/flags/:key/rules (mergeParams to see :key).
 export const rulesRouter = Router({ mergeParams: true });
@@ -43,6 +44,7 @@ rulesRouter.post('/', validateBody(createSchema), async (req: Request<{ key: str
         serve: b.serve as Prisma.InputJsonValue,
       },
     });
+    await invalidateFlag(req.params.key);
     res.status(201).json(rule);
   } catch (err) {
     next(err);
@@ -54,6 +56,7 @@ rulesRouter.delete('/:ruleId', async (req: Request<{ key: string; ruleId: string
   try {
     await flagByKey(req.params.key);
     await prisma.rule.delete({ where: { id: req.params.ruleId } });
+    await invalidateFlag(req.params.key);
     res.status(204).end();
   } catch {
     next(new HttpError(404, 'Rule not found'));

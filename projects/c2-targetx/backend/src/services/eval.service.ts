@@ -1,6 +1,6 @@
 import { prisma } from '../lib/prisma';
 import { evaluate, EvalContext, EvalResult } from '../engine/evaluate';
-import { toConfig } from './flag.service';
+import { getFlagWithConfig, toConfig } from './flag.service';
 import { HttpError } from '../middleware/errorHandler';
 
 // Log one exposure per evaluation (the raw data behind experiment analytics). Fail-open —
@@ -14,10 +14,10 @@ async function logExposure(flagId: string, unitKey: string, r: EvalResult): Prom
 }
 
 export async function evaluateFlag(key: string, ctx: EvalContext): Promise<EvalResult & { flagKey: string }> {
-  const flag = await prisma.flag.findUnique({ where: { key }, include: { rules: { orderBy: { order: 'asc' } } } });
-  if (!flag) throw new HttpError(404, 'Flag not found');
-  const result = evaluate(toConfig(flag), ctx);
-  await logExposure(flag.id, ctx.unitKey, result);
+  const fc = await getFlagWithConfig(key);
+  if (!fc) throw new HttpError(404, 'Flag not found');
+  const result = evaluate(fc.config, ctx);
+  await logExposure(fc.id, ctx.unitKey, result);
   return { flagKey: key, ...result };
 }
 
