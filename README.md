@@ -18,7 +18,7 @@ and is built MVP-first, one phase per commit.
 | E3 | **InsightDeck** — auto-insight generator from CSV | [`projects/e3-insightdeck`](projects/e3-insightdeck) | CSV type-inference · column profiling · statistical insight detectors (trend · outliers · correlation · …) · automatic chart selection · interestingness ranking | ✅ MVP |
 | A1 | **PulseBoard** — real-time metrics dashboard | [`projects/a1-pulseboard`](projects/a1-pulseboard) | Real-time streaming (Server-Sent Events) · Redis sliding-window aggregation · threshold alerting · live time-series + event simulator | ✅ MVP |
 | A3 | **Hooky** — webhook gateway / dispatcher | [`projects/a3-hooky`](projects/a3-hooky) | Reliable webhook delivery · HMAC signing · retry with exponential backoff · dead-letter + replay · per-attempt delivery log | ✅ MVP |
-| C2 | **TargetX** — feature flags + targeting engine | [`projects/c2-targetx`](projects/c2-targetx) | Rule-based targeting · deterministic percentage rollout (consistent hashing) · A/B variant assignment · flag evaluation with reasons · exposure analytics | 🚧 WIP |
+| C2 | **TargetX** — feature flags + targeting engine | [`projects/c2-targetx`](projects/c2-targetx) | Rule-based targeting · deterministic percentage rollout (consistent hashing) · A/B variant assignment · flag evaluation with reasons · exposure analytics | ✅ MVP |
 
 More projects from the catalog will be added one at a time (D2 AgentDesk,
 D3 EvalForge, E1 AeroPipe, …). See the per-project README for build details.
