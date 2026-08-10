@@ -3,6 +3,7 @@ import { DocumentsPanel } from './components/DocumentsPanel';
 import { AskPanel } from './components/AskPanel';
 import { HistoryPanel } from './components/HistoryPanel';
 import { AnalyticsPanel } from './components/AnalyticsPanel';
+import { Aurora } from './ui';
 
 type View = 'ask' | 'documents' | 'history' | 'analytics';
 
@@ -18,6 +19,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      <Aurora />
       <header className="bg-white border-b border-slate-200 px-6 py-4">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <h1 className="text-xl font-bold text-slate-800">

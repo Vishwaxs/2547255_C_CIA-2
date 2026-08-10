@@ -3,6 +3,7 @@ import { DeliveriesPanel } from './components/DeliveriesPanel';
 import { PublishPanel } from './components/PublishPanel';
 import { SubscriptionsPanel } from './components/SubscriptionsPanel';
 import { AnalyticsPanel } from './components/AnalyticsPanel';
+import { Aurora } from './ui';
 
 type View = 'deliveries' | 'publish' | 'subscriptions' | 'analytics';
 const TABS: { key: View; label: string }[] = [
@@ -16,6 +17,7 @@ export default function App() {
   const [view, setView] = useState<View>('deliveries');
   return (
     <div className="min-h-screen bg-slate-50">
+      <Aurora />
       <header className="bg-white border-b border-slate-200 px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <h1 className="text-xl font-bold text-slate-800">

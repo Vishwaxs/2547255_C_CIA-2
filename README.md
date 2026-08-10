@@ -23,6 +23,34 @@ and is built MVP-first, one phase per commit.
 
 More projects from the catalog will be added one at a time (D3 EvalForge, E1 AeroPipe, …). See the per-project README for build details.
 
+
+## Shared design system
+
+Every project's UI runs on one surface language — a dark "instrument panel" theme with an
+animated aurora ground, hairline borders, monospace for machine-produced values, and colour
+reserved for state rather than decoration.
+
+It lives in `frontend/src/ui/` and is **copied verbatim into each project** rather than
+extracted into a package, which keeps every project independently buildable and deployable —
+the same self-containment rule the rest of this monorepo follows.
+
+| File | Role |
+|---|---|
+| `ui/kit.css` | Design tokens, surfaces, controls, state colours, motion keyframes |
+| `ui/Aurora.tsx` | Animated background: drifting colour fields, parallax grid, vignette |
+| `ui/motion.tsx` | `Reveal`, `ScrambleText`, `CountUp`, `TypeOut` — scroll reveal and text/number animation |
+| `ui/controls.tsx` | `SpotlightCard`, `MagneticButton`, `Badge`, `StatusDot`, `SectionLabel` |
+| `ui/legacy-theme.css` | Bridge that remaps the older projects' light Tailwind utilities onto the dark tokens |
+
+Two constraints shaped it. **No new dependencies** — every effect is a few lines over
+`requestAnimationFrame`, `IntersectionObserver`, and CSS custom properties, so no animation
+library was added to nine projects to move a card. And **no forced motion** — every animated
+primitive checks `prefers-reduced-motion` and degrades immediately to its final state, so
+content is never gated behind an animation that will not play.
+
+The eight projects built before the system existed were retheme'd through
+`ui/legacy-theme.css` rather than by editing ~32 shipped panel components. Deleting that one
+file reverts any project to its original light theme, which is what makes the bridge safe.
 ## Conventions
 
 - **Monorepo, one folder per project** under `projects/`.

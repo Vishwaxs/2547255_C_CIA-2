@@ -1,4 +1,8 @@
+/* Shared design system. This @import MUST stay above the @tailwind directives:
+   CSS requires @import to precede all other rules, and Tailwind expands its
+   directives into real rules, so an import placed after them is silently dropped. */
+@import './ui/kit.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-body { @apply bg-slate-50 text-slate-900 antialiased; }

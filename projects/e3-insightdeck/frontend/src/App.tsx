@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { DeckPanel } from './components/DeckPanel';
 import { DatasetsPanel } from './components/DatasetsPanel';
 import { AnalyticsPanel } from './components/AnalyticsPanel';
+import { Aurora } from './ui';
 
 type View = 'deck' | 'datasets' | 'analytics';
 
@@ -16,6 +17,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      <Aurora />
       <header className="bg-white border-b border-slate-200 px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <h1 className="text-xl font-bold text-slate-800">

@@ -5,6 +5,7 @@ import { SuitesList } from './components/SuitesList';
 import { RunsPanel } from './components/RunsPanel';
 import { AnalyticsPanel } from './components/AnalyticsPanel';
 import { api } from './api';
+import { Aurora } from './ui';
 
 type Tab = 'runs' | 'analytics';
 
@@ -17,6 +18,7 @@ function SuiteDetail({ suiteId }: { suiteId: string }) {
 
   return (
     <div className="bg-white border border-slate-200 rounded-xl shadow-sm">
+      <Aurora />
       <div className="p-5 border-b border-slate-100">
         <p className="text-xs text-slate-400 mb-1">{suite?.baseUrl}</p>
         <h2 className="text-lg font-semibold text-slate-800">{suite?.name}</h2>

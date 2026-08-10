@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { FlagsPanel } from './components/FlagsPanel';
 import { EvaluatePanel } from './components/EvaluatePanel';
 import { ExperimentsPanel } from './components/ExperimentsPanel';
+import { Aurora } from './ui';
 
 type View = 'flags' | 'evaluate' | 'experiments';
 const TABS: { key: View; label: string }[] = [
@@ -14,6 +15,7 @@ export default function App() {
   const [view, setView] = useState<View>('flags');
   return (
     <div className="min-h-screen bg-slate-50">
+      <Aurora />
       <header className="bg-white border-b border-slate-200 px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <h1 className="text-xl font-bold text-slate-800">
