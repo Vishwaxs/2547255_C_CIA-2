@@ -1,0 +1,9 @@
+/* The shared design system. This @import MUST stay above the @tailwind directives:
+   CSS requires @import to precede all other rules, and Tailwind expands its directives
+   into real rules, so an @import placed after them is invalid and silently dropped —
+   taking every design token with it. */
+@import './ui/kit.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

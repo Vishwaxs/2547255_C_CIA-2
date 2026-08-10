@@ -20,9 +20,9 @@ under `projects/`, and ships with its own `README.md` and `DECISIONS.md`.
 | A1 | **PulseBoard** — real-time metrics dashboard | `projects/a1-pulseboard` | ✅ MVP |
 | A3 | **Hooky** — webhook gateway / dispatcher | `projects/a3-hooky` | ✅ MVP |
 | C2 | **TargetX** — feature flags + targeting engine | `projects/c2-targetx` | ✅ MVP |
+| D2 | **AgentDesk** — autonomous support agent (ReAct loop) | `projects/d2-agentdesk` | ✅ MVP |
 
-More projects get added **one at a time** (A1 PulseBoard, A3 Hooky,
-C2 TargetX, …). Always check the per-project `README.md` and `DECISIONS.md` before working in
+More projects get added **one at a time** (D3 EvalForge, E1 AeroPipe, …). Always check the per-project `README.md` and `DECISIONS.md` before working in
 a project folder.
 
 ## Available skills (use these)

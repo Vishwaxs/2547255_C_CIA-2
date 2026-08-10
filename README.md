@@ -19,9 +19,9 @@ and is built MVP-first, one phase per commit.
 | A1 | **PulseBoard** — real-time metrics dashboard | [`projects/a1-pulseboard`](projects/a1-pulseboard) | Real-time streaming (Server-Sent Events) · Redis sliding-window aggregation · threshold alerting · live time-series + event simulator | ✅ MVP |
 | A3 | **Hooky** — webhook gateway / dispatcher | [`projects/a3-hooky`](projects/a3-hooky) | Reliable webhook delivery · HMAC signing · retry with exponential backoff · dead-letter + replay · per-attempt delivery log | ✅ MVP |
 | C2 | **TargetX** — feature flags + targeting engine | [`projects/c2-targetx`](projects/c2-targetx) | Rule-based targeting · deterministic percentage rollout (consistent hashing) · A/B variant assignment · flag evaluation with reasons · exposure analytics | ✅ MVP |
+| D2 | **AgentDesk** — autonomous support agent | [`projects/d2-agentdesk`](projects/d2-agentdesk) | ReAct loop (Thought→Action→Observation) · tool registry · full step-by-step audit trail · confidence-gated answers · escalation on low confidence or step budget | ✅ MVP |
 
-More projects from the catalog will be added one at a time (D2 AgentDesk,
-D3 EvalForge, E1 AeroPipe, …). See the per-project README for build details.
+More projects from the catalog will be added one at a time (D3 EvalForge, E1 AeroPipe, …). See the per-project README for build details.
 
 ## Conventions
 
@@ -46,5 +46,6 @@ D3 EvalForge, E1 AeroPipe, …). See the per-project README for build details.
     ├── e3-insightdeck/        # Project E3 — see its own README
     ├── a1-pulseboard/         # Project A1 — see its own README
     ├── a3-hooky/              # Project A3 — see its own README
-    └── c2-targetx/            # Project C2 — see its own README
+    ├── c2-targetx/            # Project C2 — see its own README
+    └── d2-agentdesk/          # Project D2 — see its own README
 ```

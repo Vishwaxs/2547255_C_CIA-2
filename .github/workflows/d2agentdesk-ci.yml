@@ -1,0 +1,69 @@
+name: D2 AgentDesk CI
+
+on:
+  push:
+    paths:
+      - 'projects/d2-agentdesk/**'
+      - '.github/workflows/d2agentdesk-ci.yml'
+  pull_request:
+    paths:
+      - 'projects/d2-agentdesk/**'
+      - '.github/workflows/d2agentdesk-ci.yml'
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projects/d2-agentdesk/backend
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: agentdesk
+          POSTGRES_PASSWORD: agentdesk
+          POSTGRES_DB: agentdesk
+        ports:
+          - 5440:5432
+        options: >-
+          --health-cmd "pg_isready -U agentdesk -d agentdesk"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6387:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://agentdesk:agentdesk@localhost:5440/agentdesk?schema=public
+      REDIS_URL: redis://localhost:6387
+      PORT: 4008
+      CORS_ORIGIN: http://localhost:5181
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: projects/d2-agentdesk/backend/package-lock.json
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npx prisma migrate deploy
+      - run: npm run typecheck
+      - run: npm test
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projects/d2-agentdesk/frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: projects/d2-agentdesk/frontend/package-lock.json
+      - run: npm ci
+      - run: npm run build

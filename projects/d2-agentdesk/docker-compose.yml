@@ -1,0 +1,35 @@
+# Dev infra only: Postgres + Redis. The app itself runs on the host via `npm run dev`.
+#   docker compose up -d
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: agentdesk
+      POSTGRES_PASSWORD: agentdesk
+      POSTGRES_DB: agentdesk
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agentdesk -d agentdesk"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "5440:5432"
+    volumes:
+      - agentdesk-pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    ports:
+      - "6387:6379"
+    volumes:
+      - agentdesk-redisdata:/data
+
+volumes:
+  agentdesk-pgdata:
+  agentdesk-redisdata:
