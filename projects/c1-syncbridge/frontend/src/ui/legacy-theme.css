@@ -141,6 +141,22 @@ select option { background-color: #0a0e1a; color: var(--text); }
   box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.05) inset;
 }
 
+/* ── Stragglers ───────────────────────────────────────────────────────────── */
+
+/* Light tints that would render as bright slabs on a dark ground. */
+.bg-blue-50, .bg-blue-100, .bg-blue-200 { background-color: rgba(56, 189, 248, 0.12); }
+.bg-rose-200 { background-color: rgba(251, 113, 133, 0.16); }
+
+/* Saturated 400-level fills are status indicators (dots, bars). They read well on
+   dark already; remapped only so they use the same palette as everything else. */
+.bg-green-400  { background-color: var(--ok); }
+.bg-amber-400, .bg-yellow-400 { background-color: var(--warn); }
+.bg-red-400 { background-color: var(--danger); }
+
+.border-slate-50, .border-slate-500 { border-color: var(--border); }
+.border-indigo-400 { border-color: rgba(56, 189, 248, 0.4); }
+.ring-indigo-200 { --tw-ring-color: rgba(56, 189, 248, 0.3); }
+
 /* ── Recharts ─────────────────────────────────────────────────────────────── */
 
 /* The older analytics panels hard-code light-theme SVG attributes — notably
