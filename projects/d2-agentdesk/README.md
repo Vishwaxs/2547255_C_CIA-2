@@ -81,6 +81,15 @@ number of distinct matched terms. Below that it reports failure and carries the 
 in `rejected`, so the trace shows what the agent considered and refused rather than hiding
 the filter. See `engine/kbSearch.ts`.
 
+**A fail-closed refund classifier.** The refund branch can move money and the question
+branch cannot, so the two are not interchangeable and the classifier is deliberately
+asymmetric. An earlier version matched the bare word "refund" anywhere in the ticket, which
+meant *"What is your refund policy?"* — a question from someone who had not decided to buy
+yet — routed straight to `lookup_order`, found a perfectly good order, and refunded it.
+Mentioning a refund is not the same as asking for one. `classifyIntent` now requires an
+explicit request: an imperative, a first-person want, or a phrase that is only ever a demand.
+See `engine/intent.ts`.
+
 **Idempotent refunds.** `issue_refund` is the only tool that mutates anything, so it is the
 only one that has to be safe run twice. The check and the update happen in one transaction
 with a status precondition, so two concurrent runs cannot both refund the same order — the
@@ -146,10 +155,11 @@ hides the only interesting part; here you file it, then trigger the loop and wat
 ## Tests
 
 ```bash
-cd backend && npm test     # 63 tests across 5 suites
+cd backend && npm test     # 72 tests across 5 suites
 ```
 
-- `kbSearch` / `intent` — pure scoring, tokenization, and the confidence bar, no database.
+- `kbSearch` / `intent` — pure scoring, tokenization, the confidence bar, and the
+  fail-closed refund classifier, no database.
 - `planner` — all five branches driven by hand-built observation histories, plus the LLM
   seam's 501 and the prompt it would send.
 - `loop` — real database: the seeded scenarios end to end, the 409/404 guards, a stub
@@ -174,6 +184,6 @@ push touching this project — see `.github/workflows/d2agentdesk-ci.yml`.
 - Made the only state-mutating tool idempotent under concurrency with a transactional
   status precondition, so a double-run reports a conflict instead of double-refunding.
 - Shipped a dark, motion-aware React 18 + TanStack Query UI that renders the reasoning trace
-  as a step timeline, backed by 63 tests and path-filtered GitHub Actions CI.
+  as a step timeline, backed by 72 tests and path-filtered GitHub Actions CI.
 
 Design rationale and the trade-offs behind each of these live in [DECISIONS.md](DECISIONS.md).

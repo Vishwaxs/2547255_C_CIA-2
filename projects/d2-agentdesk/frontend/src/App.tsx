@@ -16,14 +16,20 @@ const TABS: { key: View; label: string; hint: string }[] = [
 
 export default function App() {
   const [view, setView] = useState<View>('tickets');
+  // Probe the real dependencies, not an in-memory config endpoint: describeAgent returns
+  // env vars and the tool registry, so it answers 200 even with Postgres face down.
   const health = useQuery({
     queryKey: ['health'],
-    queryFn: api.describeAgent,
+    queryFn: api.health,
     retry: false,
     refetchInterval: 30_000,
   });
+  const agent = useQuery({ queryKey: ['agent'], queryFn: api.describeAgent, retry: false });
 
-  const online = !health.isError;
+  const h = health.data;
+  const online = !!h?.reachable && h.postgres;
+  // Redis is a fail-open cache, so losing it degrades performance, not correctness.
+  const degraded = !!h?.reachable && h.postgres && !h.redis;
 
   return (
     <div className="min-h-screen">
@@ -48,9 +54,15 @@ export default function App() {
 
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-2">
-                <StatusDot tone={online ? 'ok' : 'danger'} live={online} />
+                <StatusDot tone={online ? (degraded ? 'warn' : 'ok') : 'danger'} live={online} />
                 <span className="mono text-[10.5px]" style={{ color: 'var(--faint)' }}>
-                  {online ? `api :4008 · ${health.data?.planner ?? ''}` : 'api offline'}
+                  {!h?.reachable
+                    ? 'api unreachable'
+                    : !h.postgres
+                      ? 'postgres down'
+                      : degraded
+                        ? `api :4008 · redis down (cache off)`
+                        : `api :4008 · ${agent.data?.planner ?? ''}`}
                 </span>
               </span>
             </div>
@@ -94,8 +106,11 @@ export default function App() {
               color: 'var(--danger)',
             }}
           >
-            Cannot reach the API on :4008. Start it with{' '}
-            <code className="mono">npm run dev</code> in <code className="mono">backend/</code>.
+            {h?.reachable
+              ? 'The API is up but Postgres is unreachable, so every data request will fail.'
+              : 'Cannot reach the API on :4008.'}{' '}
+            Start it with <code className="mono">npm run dev</code> in{' '}
+            <code className="mono">backend/</code>.
           </div>
         )}
 

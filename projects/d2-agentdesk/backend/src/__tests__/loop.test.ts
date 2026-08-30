@@ -89,6 +89,36 @@ describe('runAgentLoop — the four seeded scenarios', () => {
   });
 });
 
+describe('runAgentLoop — a policy question never moves money', () => {
+  it('answers a refund-policy question from the KB and leaves the order untouched', async () => {
+    const order = await prisma.order.create({
+      data: { customerId: 'cust-policy', product: 'Desk lamp', amount: 40 },
+    });
+    const ticket = await prisma.ticket.create({
+      data: {
+        customerId: 'cust-policy',
+        subject: 'What is your refund policy?',
+        body: 'I want to understand the rules before I buy anything else.',
+      },
+    });
+
+    const summary = await runAgentLoop(ticket.id);
+
+    // It must reach the customer via the knowledge base, never via lookup_order.
+    const steps = await prisma.agentStep.findMany({
+      where: { ticketId: ticket.id },
+      orderBy: { stepNumber: 'asc' },
+    });
+    expect(steps.map((s) => s.action)).not.toContain('lookup_order');
+    expect(steps.map((s) => s.action)).not.toContain('issue_refund');
+    expect(summary.outcome).toBe('answered_from_kb');
+
+    const after = await prisma.order.findUniqueOrThrow({ where: { id: order.id } });
+    expect(after.status).toBe('placed');
+    expect(after.refundedAt).toBeNull();
+  });
+});
+
 describe('runAgentLoop — guards', () => {
   it('rejects a second run of a finished ticket with 409', async () => {
     const t = await prisma.ticket.findFirstOrThrow({ where: { customerId: 'cust-101' } });

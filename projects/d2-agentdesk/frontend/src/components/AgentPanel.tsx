@@ -38,8 +38,18 @@ export function AgentPanel() {
     fill: TONE_HEX[OUTCOME_META[o.outcome as Outcome]?.tone ?? 'info'],
   }));
 
+  const failed = (stats.isError && (stats.error as Error)) || (agent.isError && (agent.error as Error));
+
   return (
     <div className="space-y-8">
+      {failed && (
+        <div
+          className="rounded-lg px-3.5 py-2.5 text-[12.5px]"
+          style={{ background: 'rgba(251,113,133,.1)', border: '1px solid rgba(251,113,133,.3)', color: 'var(--danger)' }}
+        >
+          Could not load agent data — {failed.message}. The figures below are not live.
+        </div>
+      )}
       <div>
         <SectionLabel>run statistics</SectionLabel>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">

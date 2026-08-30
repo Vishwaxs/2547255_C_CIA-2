@@ -60,12 +60,14 @@ function NewTicketForm({ onDone }: { onDone: (id: string) => void }) {
       <div className="grid sm:grid-cols-[180px_1fr] gap-3">
         <input
           className="input mono"
+          aria-label="Customer id"
           value={customerId}
           onChange={(e) => setCustomerId(e.target.value)}
           placeholder="customer id"
         />
         <input
           className="input"
+          aria-label="Subject"
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
           placeholder="Subject"
@@ -73,6 +75,7 @@ function NewTicketForm({ onDone }: { onDone: (id: string) => void }) {
       </div>
       <textarea
         className="input"
+        aria-label="Ticket body"
         rows={3}
         value={body}
         onChange={(e) => setBody(e.target.value)}
@@ -110,8 +113,19 @@ function TicketCard({
 
   return (
     <SpotlightCard
+      role="button"
+      tabIndex={0}
+      aria-pressed={selected}
       className={`card-hover p-4 cursor-pointer transition-all ${selected ? '!border-[rgba(56,189,248,.45)]' : ''}`}
       onClick={onSelect}
+      onKeyDown={(e) => {
+        // A div with onClick is invisible to the keyboard. Enter/Space restore the
+        // activation behaviour a real button would have had.
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
     >
       <div className="flex items-start gap-3">
         <span className="mt-1.5">
@@ -231,6 +245,10 @@ export function TicketsPanel() {
 
   const list = tickets.data ?? [];
 
+  // A selection that has been filtered away, deleted, or never existed must not keep
+  // driving the detail pane — otherwise the queue and the detail disagree about reality.
+  const visible = selected && list.some((t) => t.id === selected) ? selected : null;
+
   return (
     <div className="grid lg:grid-cols-[minmax(300px,380px)_1fr] gap-6 items-start">
       <div className="space-y-4">
@@ -271,7 +289,9 @@ export function TicketsPanel() {
 
         {tickets.isLoading && <div className="card p-6 shimmer" style={{ height: 90 }} />}
 
-        {!tickets.isLoading && list.length === 0 && (
+        {tickets.isError && <ErrorBar message={`Could not load tickets — ${(tickets.error as Error).message}`} />}
+
+        {!tickets.isLoading && !tickets.isError && list.length === 0 && (
           <div className="card p-6 text-center">
             <p className="text-[13px]" style={{ color: 'var(--muted)' }}>
               No tickets yet.
@@ -285,15 +305,17 @@ export function TicketsPanel() {
         <div className="space-y-2.5">
           {list.map((t, i) => (
             <Reveal key={t.id} delay={i * 45}>
-              <TicketCard ticket={t} selected={selected === t.id} onSelect={() => setSelected(t.id)} />
+              <TicketCard ticket={t} selected={visible === t.id} onSelect={() => setSelected(t.id)} />
             </Reveal>
           ))}
         </div>
       </div>
 
       <div className="lg:sticky lg:top-6">
-        {selected ? (
-          <TicketDetailView id={selected} />
+        {visible ? (
+          // Keyed by id: TicketDetailView holds per-ticket error and mutation state, and
+          // without a key React reuses the instance and leaks that state to the next ticket.
+          <TicketDetailView key={visible} id={visible} />
         ) : (
           <div className="card p-10 text-center">
             <p className="text-[14px]" style={{ color: 'var(--muted)' }}>

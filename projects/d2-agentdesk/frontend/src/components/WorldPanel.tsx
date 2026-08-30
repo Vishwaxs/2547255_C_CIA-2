@@ -2,6 +2,19 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../api';
 import { Badge, SectionLabel, SpotlightCard, Reveal } from '../ui';
 
+/** An API failure and an empty database look identical if errors are swallowed, so both
+ *  world views say which one actually happened. */
+function ErrorBar({ message }: { message: string }) {
+  return (
+    <div
+      className="rounded-lg px-3.5 py-2.5 text-[12.5px] mb-3"
+      style={{ background: 'rgba(251,113,133,.1)', border: '1px solid rgba(251,113,133,.3)', color: 'var(--danger)' }}
+    >
+      {message}
+    </div>
+  );
+}
+
 /**
  * Read-only windows onto the world the agent acts in. Without this the trace is
  * unfalsifiable — you can watch the agent claim it refunded an order, but not confirm the
@@ -29,6 +42,7 @@ export function WorldPanel() {
         </p>
 
         {kb.isLoading && <div className="card p-6 shimmer" style={{ height: 110 }} />}
+        {kb.isError && <ErrorBar message={`Could not load the knowledge base — ${(kb.error as Error).message}`} />}
         <div className="space-y-3">
           {(kb.data ?? []).map((a, i) => (
             <Reveal key={a.id} delay={i * 50}>
@@ -50,7 +64,7 @@ export function WorldPanel() {
               </SpotlightCard>
             </Reveal>
           ))}
-          {!kb.isLoading && (kb.data ?? []).length === 0 && (
+          {!kb.isLoading && !kb.isError && (kb.data ?? []).length === 0 && (
             <div className="card p-6 text-center text-[13px]" style={{ color: 'var(--muted)' }}>
               Empty — seed the demo from the Tickets tab.
             </div>
@@ -74,6 +88,7 @@ export function WorldPanel() {
         </p>
 
         {orders.isLoading && <div className="card p-6 shimmer" style={{ height: 110 }} />}
+        {orders.isError && <ErrorBar message={`Could not load orders — ${(orders.error as Error).message}`} />}
         <div className="space-y-2.5">
           {(orders.data ?? []).map((o, i) => (
             <Reveal key={o.id} delay={i * 50}>
@@ -95,7 +110,7 @@ export function WorldPanel() {
               </SpotlightCard>
             </Reveal>
           ))}
-          {!orders.isLoading && (orders.data ?? []).length === 0 && (
+          {!orders.isLoading && !orders.isError && (orders.data ?? []).length === 0 && (
             <div className="card p-6 text-center text-[13px]" style={{ color: 'var(--muted)' }}>
               Empty — seed the demo from the Tickets tab.
             </div>

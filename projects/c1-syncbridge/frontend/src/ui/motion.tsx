@@ -137,20 +137,24 @@ export function CountUp({
 }) {
   const reduced = usePrefersReducedMotion();
   const [display, setDisplay] = useState(reduced ? value : 0);
-  const fromRef = useRef(0);
+  // Tracks what is currently painted, updated every frame. Animating from the last
+  // *settled* value instead would make a mid-flight target change snap backwards to the
+  // previous total before counting up again.
+  const displayRef = useRef(0);
 
   useEffect(() => {
     if (reduced) return setDisplay(value);
-    const from = fromRef.current;
+    const from = displayRef.current;
     const start = performance.now();
     let raf = 0;
 
     const tick = (now: number) => {
       const t = Math.min((now - start) / duration, 1);
       const eased = 1 - Math.pow(1 - t, 3);
-      setDisplay(from + (value - from) * eased);
+      const next = from + (value - from) * eased;
+      displayRef.current = next;
+      setDisplay(next);
       if (t < 1) raf = requestAnimationFrame(tick);
-      else fromRef.current = value;
     };
 
     raf = requestAnimationFrame(tick);

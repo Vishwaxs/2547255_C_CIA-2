@@ -178,7 +178,43 @@ taking every design token with it. The build passed and the page rendered comple
 unstyled. It now sits at the top of `index.css` with a comment explaining why it must stay
 there.
 
-## D13 · Port scheme
+## D13 · What an adversarial review of my own work turned up
+
+After the build was green, tested and pushed, I ran a multi-agent review over the diff —
+independent reviewers per dimension, each finding then checked by verifiers told to refute
+it. Two defects came out of it that every green check had missed, and both are worth keeping
+in the log because they are the same species of bug in two different layers.
+
+**The refund classifier was not fail-closed.** `classifyIntent` matched the bare word
+"refund" anywhere in the ticket. "What is your refund policy?" therefore classified as a
+refund *request*, went to `lookup_order`, found a valid order, and refunded it. The branches
+are asymmetric — one can move money, one can only read — so the classifier had to be
+asymmetric too, and it was not. The fix requires an explicit request form; the regression
+test asserts end-to-end that a policy question never reaches `issue_refund` and leaves the
+order in `placed`. This is the same failure as D5: the agent acting confidently on a
+coincidental keyword match. I had guarded retrieval against it and left routing wide open.
+
+**The spotlight glow never worked.** `SpotlightCard` carries both `card` and `spotlight`,
+and both classes defined `::before` — one pseudo-element, two effects. `.card::before` sets
+`height: 1px` for the top hairline; `.spotlight::before` set `inset: -1px` but never reset
+the height it inherited, so the cursor glow was painted into a one-pixel strip. It compiled,
+it rendered, it screenshotted fine, and the effect was simply absent. The glow now lives on
+`::after`. Measured after the fix: `::before` is 1px, `::after` is 103.75px on a 104px card.
+
+The reviewers also flagged the absence of authentication, rate limiting, and security
+headers. Those are real, and deliberately out of scope for a public demo whose whole point
+is that anyone can press "Run agent" — but they are limitations, not oversights, and they are
+recorded as such rather than quietly left out. Adding them would also mean new dependencies,
+which this monorepo does not do without asking.
+
+Worth noting how the review itself failed first: every verifier agent died on a rate limit,
+and because my script marked a finding confirmed only when at least one verifier upheld it,
+the run returned zero confirmed findings — a result shape indistinguishable from a clean bill
+of health. A harness that reports "nothing found" when it actually found nothing *out* is
+worse than no harness. If I kept it, it would assert that the number of successful reviewers
+equals the number of dimensions and fail loudly otherwise.
+
+## D14 · Port scheme
 
 Backend `4008`, Postgres `5440`, Redis `6387`, Vite dev `5181`, full-compose frontend `8088`
 — each +1 from C2 TargetX, so all nine projects' dev stacks run side by side without

@@ -223,9 +223,13 @@ body {
 
 .live-dot { animation: kit-pulse 1.7s ease-in-out infinite; }
 
-/* Cursor-tracked highlight. --mx/--my are written by the Spotlight component. */
+/* Cursor-tracked highlight. --mx/--my are written by the Spotlight component.
+   This uses ::after, not ::before, because SpotlightCard carries BOTH `card` and
+   `spotlight`, and `.card::before` already owns the top hairline — including a
+   `height: 1px` that a `.spotlight::before` would inherit, squashing the glow into a
+   one-pixel strip. Two independent effects need two independent pseudo-elements. */
 .spotlight { position: relative; }
-.spotlight::before {
+.spotlight::after {
   content: "";
   position: absolute;
   inset: -1px;
@@ -238,8 +242,9 @@ body {
     transparent 62%
   );
   pointer-events: none;
+  z-index: 0;
 }
-.spotlight:hover::before { opacity: 1; }
+.spotlight:hover::after { opacity: 1; }
 
 /* Every animation above is decorative. Anyone who has asked the OS to stop
    moving things gets a static, fully legible interface. */

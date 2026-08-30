@@ -63,8 +63,10 @@ model AgentStep {
   durationMs  Int      @default(0)
   createdAt   DateTime @default(now())
 
+  // The unique constraint already creates a btree on exactly these columns in this order,
+  // which serves the ordered per-ticket trace read. A separate @@index would be a second
+  // identical tree, doubling write cost on the hottest insert path for no read benefit.
   @@unique([ticketId, stepNumber])
-  @@index([ticketId, stepNumber])
 }
 
 model KnowledgeArticle {

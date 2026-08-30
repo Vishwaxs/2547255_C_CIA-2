@@ -31,7 +31,27 @@ export interface SeedResult {
   ran: number;
 }
 
+export interface Health {
+  reachable: boolean;
+  postgres: boolean;
+  redis: boolean;
+}
+
+/** A real dependency probe. /healthz answers 200 or 503 with the same body, so this reads
+ *  the body either way instead of throwing — "Redis is down" and "the API is unreachable"
+ *  are different facts and the UI needs to tell them apart. */
+async function health(): Promise<Health> {
+  try {
+    const res = await fetch(`${BASE}/healthz`);
+    const body = (await res.json().catch(() => ({}))) as { postgres?: boolean; redis?: boolean };
+    return { reachable: true, postgres: !!body.postgres, redis: !!body.redis };
+  } catch {
+    return { reachable: false, postgres: false, redis: false };
+  }
+}
+
 export const api = {
+  health,
   listTickets: (status?: string) =>
     json<TicketListItem[]>(`/api/tickets${status && status !== 'all' ? `?status=${status}` : ''}`),
   getTicket: (id: string) => json<TicketDetail>(`/api/tickets/${id}`),
