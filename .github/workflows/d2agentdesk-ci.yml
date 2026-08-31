@@ -37,6 +37,9 @@ jobs:
           --health-interval 5s --health-timeout 3s --health-retries 10
     env:
       DATABASE_URL: postgresql://agentdesk:agentdesk@localhost:5440/agentdesk?schema=public
+      # Prisma requires directUrl's variable to be DEFINED wherever the schema is loaded,
+      # even when it is unused. There is no pooler here, so it mirrors DATABASE_URL.
+      DIRECT_URL: postgresql://agentdesk:agentdesk@localhost:5440/agentdesk?schema=public
       REDIS_URL: redis://localhost:6387
       PORT: 4008
       CORS_ORIGIN: http://localhost:5181

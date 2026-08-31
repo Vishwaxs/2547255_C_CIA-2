@@ -8,7 +8,14 @@ import type {
   RunResult,
 } from './types';
 
-const BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:4008';
+// In dev the API is a separate origin on :4008. In a deployed build the default is the
+// SAME origin and requests go to relative paths, which the host's rewrites proxy to the
+// API deployment. That keeps the built bundle free of any baked-in backend URL — no
+// rebuild to repoint it, and no CORS preflight, because the browser only ever sees one
+// origin. VITE_API_URL still overrides both when you want to aim at something else.
+const BASE =
+  (import.meta.env.VITE_API_URL as string | undefined) ??
+  (import.meta.env.DEV ? 'http://localhost:4008' : '');
 
 async function json<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {

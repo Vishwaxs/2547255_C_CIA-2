@@ -39,6 +39,8 @@ services:
       PORT: 4008
       PUBLIC_BASE_URL: http://localhost:4008
       DATABASE_URL: postgresql://agentdesk:agentdesk@postgres:5432/agentdesk?schema=public
+      # No pooler in the compose stack, so the direct URL is the same host.
+      DIRECT_URL: postgresql://agentdesk:agentdesk@postgres:5432/agentdesk?schema=public
       REDIS_URL: redis://redis:6379
       CORS_ORIGIN: http://localhost:8088
       PLANNER_KIND: rule_based
