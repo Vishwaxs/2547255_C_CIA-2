@@ -106,6 +106,14 @@ docker compose -f docker-compose.full.yml up --build
 # backend   http://localhost:4008
 ```
 
+The backend image runs as a non-root user and applies pending migrations before starting.
+It invokes the Prisma CLI by path rather than through `npx`: the CLI survives
+`npm ci --omit=dev` only because `@prisma/client` declares it as an optional peer, and if
+that ever stops being true `npx` would silently fetch an unpinned CLI from the registry at
+boot instead of failing. Compose files are validated in CI; the production image layout —
+`npm ci --omit=dev`, the copied client, `migrate deploy`, then `node dist/server.js` — was
+replayed outside Docker and confirmed to boot, migrate and serve.
+
 ### Option B — dev infra in Docker, app on the host
 
 ```bash
