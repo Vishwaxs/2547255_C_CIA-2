@@ -149,6 +149,21 @@ That is a real if modest use. It is called out because "we added Redis because t
 had Redis" is not a defensible answer, and the cache being fail-open is the part that
 matters — a cache that can fail a request is a liability, not an optimization.
 
+Fail-open is only worth anything if it fails *fast*, and the first version did not. Killing
+Redis and timing a real agent run turned a 7ms request into a **7201ms** one: ioredis queues
+commands while disconnected and waits for a reconnect, so every cache read paid the full
+timeout before the `catch` block that "handles" the outage ever ran. The answer was still
+correct, which is exactly why nothing caught it — a passing test and a wrong-by-1000x latency
+look identical unless you put a clock on it. Fixed with `enableOfflineQueue:false` plus
+`commandTimeout`/`connectTimeout`; the same measurement now reads 7ms with Redis down.
+
+That fix then broke `/healthz` in an instructive way, and the test suite caught it
+immediately: with `lazyConnect` there is no socket until the first command, and
+`enableOfflineQueue:false` rejects that first command instead of waiting for one — so a cold
+start reported Redis down while it was perfectly healthy. Kicking off `redis.connect()`
+without awaiting it keeps startup non-blocking and has the dial already in flight before
+anything asks.
+
 ## D12 · The UI kit is hand-written, and shared across the monorepo
 
 The interface needed to look like an instrument, not a landing page, and the reasoning trace
