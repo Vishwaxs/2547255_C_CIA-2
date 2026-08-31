@@ -114,6 +114,26 @@ boot instead of failing. Compose files are validated in CI; the production image
 `npm ci --omit=dev`, the copied client, `migrate deploy`, then `node dist/server.js` — was
 replayed outside Docker and confirmed to boot, migrate and serve.
 
+### Deploy it (Vercel + Supabase)
+
+```bash
+bash scripts/deploy-vercel.sh
+```
+
+One script, run from your own machine so your logins are the ones used. It signs you into
+Vercel (opening your real browser), reads the Supabase database password without echoing or
+storing it, creates both Vercel projects, sets their environment variables, deploys the API,
+points the UI at it via rewrites, deploys the UI, then seeds the demo and fails loudly unless
+all five planner branches are reached against the live database.
+
+The Supabase project, schema and RLS already exist. The password is the only value the
+Supabase management API will not return, which is why the script asks for it rather than
+fetching it.
+
+`REDIS_URL` is deliberately left unset in production: serverless has no Redis, and the cache
+is fail-open, so the deployed API reports `redis: "not_configured"` and runs at full speed
+without it. The UI treats that as healthy rather than degraded.
+
 ### Option B — dev infra in Docker, app on the host
 
 ```bash
