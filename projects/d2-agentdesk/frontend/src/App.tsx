@@ -29,7 +29,8 @@ export default function App() {
   const h = health.data;
   const online = !!h?.reachable && h.postgres;
   // Redis is a fail-open cache, so losing it degrades performance, not correctness.
-  const degraded = !!h?.reachable && h.postgres && !h.redis;
+  // 'not_configured' is a deployment choice (no cache on serverless), not a fault.
+  const degraded = !!h?.reachable && h.postgres && h.redis === false;
 
   return (
     <div className="min-h-screen">

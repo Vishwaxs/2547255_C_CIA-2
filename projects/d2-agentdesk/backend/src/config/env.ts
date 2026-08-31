@@ -4,7 +4,9 @@ const schema = z.object({
   PORT: z.coerce.number().default(4008),
   PUBLIC_BASE_URL: z.string().url().default('http://localhost:4008'),
   DATABASE_URL: z.string().min(1),
-  REDIS_URL: z.string().default('redis://localhost:6387'),
+  // Optional. Absent means "no cache configured" — a first-class mode, not an outage:
+  // serverless targets have no Redis, and the cache was always fail-open anyway.
+  REDIS_URL: z.string().default(''),
   CORS_ORIGIN: z.string().default('http://localhost:5181'),
   // Which Planner implementation drives the loop. Swapping this is the entire difference
   // between the offline deterministic agent and an LLM-backed one.

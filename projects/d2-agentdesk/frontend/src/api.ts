@@ -34,7 +34,8 @@ export interface SeedResult {
 export interface Health {
   reachable: boolean;
   postgres: boolean;
-  redis: boolean;
+  /** true = reachable, false = configured but down, 'not_configured' = no cache deployed. */
+  redis: boolean | 'not_configured';
 }
 
 /** A real dependency probe. /healthz answers 200 or 503 with the same body, so this reads
@@ -43,8 +44,15 @@ export interface Health {
 async function health(): Promise<Health> {
   try {
     const res = await fetch(`${BASE}/healthz`);
-    const body = (await res.json().catch(() => ({}))) as { postgres?: boolean; redis?: boolean };
-    return { reachable: true, postgres: !!body.postgres, redis: !!body.redis };
+    const body = (await res.json().catch(() => ({}))) as {
+      postgres?: boolean;
+      redis?: boolean | 'not_configured';
+    };
+    return {
+      reachable: true,
+      postgres: !!body.postgres,
+      redis: body.redis === 'not_configured' ? 'not_configured' : !!body.redis,
+    };
   } catch {
     return { reachable: false, postgres: false, redis: false };
   }

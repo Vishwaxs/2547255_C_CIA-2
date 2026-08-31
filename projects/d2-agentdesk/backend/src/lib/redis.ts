@@ -14,16 +14,25 @@ import { env } from '../config/env';
 //   enableOfflineQueue:false  -> reject immediately while down instead of queueing
 //   commandTimeout            -> cap a command against a connected-but-unresponsive server
 //   connectTimeout            -> cap the initial dial
-export const redis = new Redis(env.REDIS_URL, {
-  lazyConnect: true,
-  maxRetriesPerRequest: 1,
-  enableOfflineQueue: false,
-  commandTimeout: 250,
-  connectTimeout: 500,
-  retryStrategy: (times) => Math.min(times * 200, 5000),
-});
+/** Redis is optional. When no REDIS_URL is set (or caching is switched off) there is no
+ *  client at all, and every call site degrades to the Postgres path. Typing this as
+ *  `Redis | null` rather than hiding the absence behind a stub forces each caller to say
+ *  what it does without a cache, which is what keeps "not configured" from being reported
+ *  as "down". */
+export const redisEnabled = env.REDIS_URL.length > 0 && env.KB_CACHE_TTL_SECONDS > 0;
 
-redis.on('error', (err: Error) => {
+export const redis = redisEnabled
+  ? new Redis(env.REDIS_URL, {
+      lazyConnect: true,
+      maxRetriesPerRequest: 1,
+      enableOfflineQueue: false,
+      commandTimeout: 250,
+      connectTimeout: 500,
+      retryStrategy: (times) => Math.min(times * 200, 5000),
+    })
+  : null;
+
+redis?.on('error', (err: Error) => {
   console.error('[redis] connection error:', err.message);
 });
 
@@ -32,12 +41,23 @@ redis.on('error', (err: Error) => {
 // so the very first cache read (and /healthz) would report Redis down on a cold start even
 // when it is perfectly healthy. Kicking off the dial here without awaiting it keeps startup
 // non-blocking while ensuring the connection is already in flight by the time anything asks.
-void redis.connect().catch(() => {
+void redis?.connect().catch(() => {
   /* the error handler above already logs; retryStrategy owns reconnection from here */
 });
 
+/** true = reachable, false = configured but unreachable, null = not configured at all. */
+export async function pingRedis(): Promise<boolean | null> {
+  if (!redis) return null;
+  try {
+    await redis.ping();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function cacheGet<T>(key: string): Promise<T | null> {
-  if (env.KB_CACHE_TTL_SECONDS === 0) return null;
+  if (!redis) return null;
   try {
     const raw = await redis.get(key);
     return raw ? (JSON.parse(raw) as T) : null;
@@ -47,7 +67,7 @@ export async function cacheGet<T>(key: string): Promise<T | null> {
 }
 
 export async function cacheSet(key: string, value: unknown): Promise<void> {
-  if (env.KB_CACHE_TTL_SECONDS === 0) return;
+  if (!redis) return;
   try {
     await redis.set(key, JSON.stringify(value), 'EX', env.KB_CACHE_TTL_SECONDS);
   } catch {
@@ -56,6 +76,7 @@ export async function cacheSet(key: string, value: unknown): Promise<void> {
 }
 
 export async function cacheDrop(key: string): Promise<void> {
+  if (!redis) return;
   try {
     await redis.del(key);
   } catch {

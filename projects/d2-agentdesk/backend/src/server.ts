@@ -14,7 +14,7 @@ async function shutdown() {
   console.log('[agentdesk] shutting down');
   server.close(async () => {
     await prisma.$disconnect().catch(() => undefined);
-    redis.disconnect();
+    redis?.disconnect();
     process.exit(0);
   });
 }

@@ -11,7 +11,7 @@ beforeAll(async () => {
   await prisma.knowledgeArticle.deleteMany();
   await prisma.order.deleteMany();
   try {
-    await redis.flushall();
+    await redis?.flushall();
   } catch {
     /* cache is optional */
   }
@@ -19,14 +19,16 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await prisma.$disconnect();
-  redis.disconnect();
+  redis?.disconnect();
 });
 
 describe('HTTP surface', () => {
   it('reports health for both dependencies', async () => {
     const res = await request(app).get('/healthz');
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ postgres: true, redis: true });
+    expect(res.body.postgres).toBe(true);
+    // redis is true when configured and reachable, 'not_configured' when absent (serverless)
+    expect([true, 'not_configured']).toContain(res.body.redis);
   });
 
   it('describes the agent and its registered tools', async () => {

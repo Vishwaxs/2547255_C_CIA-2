@@ -42,6 +42,12 @@ export interface TicketDetail extends TicketListItem {
   steps: AgentStep[];
 }
 
+export interface HealthReport {
+  postgres: boolean;
+  /** true = reachable, false = configured but down, 'not_configured' = no cache deployed. */
+  redis: boolean | 'not_configured';
+}
+
 export interface KnowledgeArticle {
   id: string;
   title: string;

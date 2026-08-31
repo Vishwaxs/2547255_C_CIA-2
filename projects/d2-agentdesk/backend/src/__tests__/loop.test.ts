@@ -13,7 +13,7 @@ async function reset() {
   await prisma.knowledgeArticle.deleteMany();
   await prisma.order.deleteMany();
   try {
-    await redis.flushall();
+    await redis?.flushall();
   } catch {
     /* cache is optional */
   }
@@ -22,7 +22,7 @@ async function reset() {
 beforeAll(reset);
 afterAll(async () => {
   await prisma.$disconnect();
-  redis.disconnect();
+  redis?.disconnect();
 });
 
 describe('runAgentLoop — the four seeded scenarios', () => {
