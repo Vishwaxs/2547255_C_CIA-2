@@ -134,6 +134,41 @@ fetching it.
 is fail-open, so the deployed API reports `redis: "not_configured"` and runs at full speed
 without it. The UI treats that as healthy rather than degraded.
 
+#### Or: connect the repo to Vercel and let pushes deploy it
+
+The script above is one-shot. To get a deployment that redeploys itself on every push,
+link the repository in Vercel instead. Nothing in the code needs to change — `api.ts`
+already reads `VITE_API_URL` and falls back to same-origin — but it is **two** Vercel
+projects over one repo, and three environment variables that are easy to miss:
+
+| Vercel project | Root Directory |
+|---|---|
+| `d2-agentdesk-api` | `projects/d2-agentdesk/backend` |
+| `d2-agentdesk` | `projects/d2-agentdesk/frontend` |
+
+Both already carry a committed `vercel.json`, so the build settings are picked up
+automatically. Create the API project first, then set:
+
+| Project | Variable | Value |
+|---|---|---|
+| API | `DATABASE_URL` | pooled Supabase URI, port 6543, `?pgbouncer=true&connection_limit=1` |
+| API | `DIRECT_URL` | direct Supabase URI, port 5432 — migrations cannot run through a transaction-mode pooler |
+| API | `CORS_ORIGIN` | the **UI's** URL |
+| UI | `VITE_API_URL` | the **API's** URL |
+
+The two URL variables reference each other, so the order is: deploy the API, deploy the
+UI, set each one's variable to the other's URL, then redeploy both. `VITE_API_URL` is
+read by Vite at **build** time and inlined into the bundle, so changing it later requires
+a redeploy, not just a restart.
+
+`CORS_ORIGIN` is the one that fails quietly. It defaults to `http://localhost:5181`, so
+if you skip it the API is up, `/healthz` is green, and the server logs look entirely
+healthy — the preflight even answers `204` — but it answers with
+`Access-Control-Allow-Origin: http://localhost:5181`, so the browser blocks every
+request from the deployed UI. There is nothing in the API's own logs to find. Setting it to the UI's origin is what makes the
+two-origin split work; the `deploy-vercel.sh` route sidesteps the problem entirely by
+putting both behind one origin with rewrites.
+
 ### Option B — dev infra in Docker, app on the host
 
 ```bash
