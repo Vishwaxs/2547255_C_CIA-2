@@ -1,0 +1,82 @@
+name: QAForge CI
+
+on:
+  push:
+    paths:
+      - "projects/b1-qaforge/**"
+      - ".github/workflows/qaforge-ci.yml"
+  pull_request:
+    paths:
+      - "projects/b1-qaforge/**"
+      - ".github/workflows/qaforge-ci.yml"
+
+jobs:
+  backend:
+    name: backend (typecheck + tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projects/b1-qaforge/backend
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: qaforge
+          POSTGRES_PASSWORD: qaforge
+          POSTGRES_DB: qaforge
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U qaforge -d qaforge"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6380:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://qaforge:qaforge@localhost:5433/qaforge?schema=public
+      REDIS_URL: redis://localhost:6380
+      PORT: 4001
+      CORS_ORIGIN: http://localhost:5174
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: projects/b1-qaforge/backend/package-lock.json
+
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npx prisma migrate deploy
+      - run: npm run typecheck
+      - run: npm test
+
+  frontend:
+    name: frontend (typecheck + build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projects/b1-qaforge/frontend
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: projects/b1-qaforge/frontend/package-lock.json
+
+      - run: npm ci
+      - run: npm run build

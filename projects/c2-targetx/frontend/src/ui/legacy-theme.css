@@ -1,0 +1,192 @@
+/* ───────────────────────────────────────────────────────────────────────────
+   Legacy theme bridge
+   ---------------------------------------------------------------------------
+   The eight projects built before this design system existed are written
+   against a light Tailwind palette — bg-white cards, slate text, indigo
+   accents. Rather than hand-edit ~32 shipped panel components to adopt the
+   dark surface language (a large, risky diff across working code for a purely
+   visual change), this file remaps those utilities onto the design tokens.
+
+   It must load AFTER Tailwind's utilities. Both sides are single-class
+   selectors, so equal specificity means source order decides and no
+   !important is needed. main.tsx imports it immediately after index.css.
+
+   Panels written natively against the kit (see d2-agentdesk) never match
+   these selectors and are unaffected. Deleting this file reverts any project
+   to its original light theme, which is the property that makes the bridge
+   safe to ship.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* ── Page and card surfaces ───────────────────────────────────────────────── */
+
+/* Page grounds go transparent so the shared Aurora background shows through. */
+.bg-slate-50,
+.bg-gray-50 { background-color: transparent; }
+
+/* The near-universal card recipe in the older projects is
+   `bg-white border border-slate-200 rounded-xl`. */
+.bg-white {
+  background-color: var(--surface);
+  backdrop-filter: blur(12px) saturate(140%);
+}
+
+.bg-slate-100, .bg-gray-100 { background-color: var(--surface-hi); }
+.bg-slate-200, .bg-gray-200 { background-color: rgba(255, 255, 255, 0.07); }
+.bg-slate-300 { background-color: rgba(255, 255, 255, 0.1); }
+
+/* `bg-slate-800 text-white` is the secondary-button recipe across the older
+   projects. It was a dark control on a light page; sinking it to near-black on a
+   dark page leaves floating text with no edge, so these lift instead and get a
+   hairline. The ring is an inset shadow rather than a border so nothing reflows. */
+.bg-slate-700, .bg-slate-800, .bg-slate-900 {
+  background-color: var(--surface-hi);
+  box-shadow: inset 0 0 0 1px var(--border-hi);
+  color: var(--text);
+}
+/* ...except when the element is a code/pre block, where a recessed well is right. */
+pre.bg-slate-800, pre.bg-slate-900, pre.bg-slate-700,
+code.bg-slate-800, code.bg-slate-900 {
+  background-color: rgba(0, 0, 0, 0.42);
+  box-shadow: none;
+}
+
+.hover\:bg-slate-50:hover  { background-color: var(--surface); }
+.hover\:bg-slate-100:hover { background-color: var(--surface-hi); }
+.hover\:bg-slate-200:hover { background-color: rgba(255, 255, 255, 0.09); }
+.hover\:bg-slate-700:hover, .hover\:bg-slate-800:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* ── Text ─────────────────────────────────────────────────────────────────── */
+
+.text-slate-900, .text-slate-800, .text-slate-700,
+.text-gray-900,  .text-gray-800 { color: var(--text); }
+
+.text-slate-600, .text-slate-500,
+.text-gray-600,  .text-gray-500 { color: var(--muted); }
+
+.text-slate-400, .text-slate-300,
+.text-gray-400 { color: var(--faint); }
+
+/* ── Borders ──────────────────────────────────────────────────────────────── */
+
+.border-slate-100, .border-slate-200, .border-slate-300,
+.border-gray-100,  .border-gray-200,  .border-gray-300 { border-color: var(--border); }
+
+.divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+.divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-color: var(--border); }
+
+.hover\:border-slate-300:hover, .hover\:border-slate-400:hover { border-color: var(--border-hi); }
+
+/* ── Accent (indigo in the older projects) ────────────────────────────────── */
+
+.bg-indigo-500, .bg-indigo-600, .bg-indigo-700 {
+  background-image: linear-gradient(96deg, var(--accent), var(--accent-2));
+  background-color: transparent;
+  color: #04121d;
+}
+.hover\:bg-indigo-700:hover, .hover\:bg-indigo-600:hover {
+  background-image: linear-gradient(96deg, #4fc9fb, #93a0fb);
+  color: #04121d;
+}
+/* A button coloured by the rule above needs dark glyphs, not white ones. */
+.bg-indigo-500.text-white, .bg-indigo-600.text-white, .bg-indigo-700.text-white { color: #04121d; }
+
+.bg-indigo-50, .bg-indigo-100 { background-color: rgba(56, 189, 248, 0.12); }
+.text-indigo-600, .text-indigo-700, .text-indigo-800, .text-blue-700, .text-blue-600 { color: var(--accent); }
+.border-indigo-200, .border-indigo-300 { border-color: rgba(56, 189, 248, 0.35); }
+.ring-indigo-400, .ring-indigo-500 { --tw-ring-color: rgba(56, 189, 248, 0.5); }
+.focus\:ring-indigo-400:focus, .focus\:ring-indigo-500:focus { --tw-ring-color: rgba(56, 189, 248, 0.5); }
+
+/* ── Semantic state ───────────────────────────────────────────────────────── */
+
+.text-emerald-600, .text-emerald-700, .text-emerald-800, .text-green-600, .text-green-700 { color: var(--ok); }
+.bg-emerald-50, .bg-emerald-100, .bg-green-100 { background-color: rgba(52, 211, 153, 0.12); }
+.bg-emerald-500, .bg-emerald-600, .bg-green-500 { background-color: rgba(52, 211, 153, 0.85); color: #04121d; }
+.border-emerald-200, .border-green-200 { border-color: rgba(52, 211, 153, 0.32); }
+
+.text-amber-600, .text-amber-700, .text-amber-800, .text-yellow-600, .text-yellow-700 { color: var(--warn); }
+.bg-amber-50, .bg-amber-100, .bg-yellow-100 { background-color: rgba(251, 191, 36, 0.12); }
+.bg-amber-500, .bg-yellow-500 { background-color: rgba(251, 191, 36, 0.85); color: #1a1204; }
+.border-amber-200, .border-yellow-200 { border-color: rgba(251, 191, 36, 0.32); }
+
+.text-rose-500, .text-rose-600, .text-rose-700, .text-red-500, .text-red-600, .text-red-700 { color: var(--danger); }
+.bg-rose-50, .bg-rose-100, .bg-red-50, .bg-red-100 { background-color: rgba(251, 113, 133, 0.12); }
+.bg-rose-500, .bg-rose-600, .bg-red-500, .bg-red-600 { background-color: rgba(251, 113, 133, 0.85); color: #1d0509; }
+.border-rose-200, .border-rose-300, .border-red-200 { border-color: rgba(251, 113, 133, 0.32); }
+
+.text-violet-600, .text-violet-700, .text-purple-600, .text-purple-700 { color: var(--accent-3); }
+.bg-violet-100, .bg-purple-100 { background-color: rgba(192, 132, 252, 0.12); }
+.text-sky-600, .text-sky-700 { color: var(--accent); }
+.bg-sky-100 { background-color: rgba(56, 189, 248, 0.12); }
+
+/* ── Form controls ────────────────────────────────────────────────────────── */
+
+/* Unclassed inputs default to a white UA background, which is unreadable here. */
+input:not([type='checkbox']):not([type='radio']),
+select,
+textarea {
+  background-color: rgba(0, 0, 0, 0.32);
+  color: var(--text);
+  border-color: var(--border);
+}
+input::placeholder, textarea::placeholder { color: var(--faint); }
+select option { background-color: #0a0e1a; color: var(--text); }
+
+/* ── Depth ────────────────────────────────────────────────────────────────── */
+
+/* Drop shadows tuned for dark text on white read as grey smudges on a dark
+   ground. Replaced with the depth cue that actually works here: a border. */
+.shadow-sm, .shadow, .shadow-md, .shadow-lg, .shadow-xl {
+  box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.05) inset;
+}
+
+/* ── Stragglers ───────────────────────────────────────────────────────────── */
+
+/* Light tints that would render as bright slabs on a dark ground. */
+.bg-blue-50, .bg-blue-100, .bg-blue-200 { background-color: rgba(56, 189, 248, 0.12); }
+.bg-rose-200 { background-color: rgba(251, 113, 133, 0.16); }
+
+/* Saturated 400-level fills are status indicators (dots, bars). They read well on
+   dark already; remapped only so they use the same palette as everything else. */
+.bg-green-400  { background-color: var(--ok); }
+.bg-amber-400, .bg-yellow-400 { background-color: var(--warn); }
+.bg-red-400 { background-color: var(--danger); }
+
+.border-slate-50, .border-slate-500 { border-color: var(--border); }
+.border-indigo-400 { border-color: rgba(56, 189, 248, 0.4); }
+.ring-indigo-200 { --tw-ring-color: rgba(56, 189, 248, 0.3); }
+
+/* ── Recharts ─────────────────────────────────────────────────────────────── */
+
+/* The older analytics panels hard-code light-theme SVG attributes — notably
+   `stroke="#f1f5f9"` grid lines, which are near-white and burn on a dark ground,
+   and axis text that defaults to dark grey. These are inline presentation
+   attributes, so no utility-class remap reaches them; CSS does, because a CSS
+   declaration beats an SVG presentation attribute. Series colours are left alone
+   on purpose — overriding those would collapse every line in a multi-series
+   chart to a single colour. */
+.recharts-cartesian-grid line,
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line { stroke: rgba(255, 255, 255, 0.065); }
+
+.recharts-cartesian-axis-line,
+.recharts-cartesian-axis-tick-line { stroke: var(--border); }
+
+.recharts-text,
+.recharts-cartesian-axis-tick-value,
+.recharts-label { fill: var(--muted); }
+
+.recharts-legend-item-text { color: var(--muted) !important; }
+
+.recharts-default-tooltip {
+  background: #090d17 !important;
+  border: 1px solid var(--border-hi) !important;
+  border-radius: 10px;
+  color: var(--text) !important;
+}
+.recharts-tooltip-label { color: var(--text) !important; }
+.recharts-tooltip-item { color: var(--muted) !important; }
+
+/* The hover band behind a tooltip is a light fill by default. */
+.recharts-tooltip-cursor { fill: rgba(255, 255, 255, 0.04); }

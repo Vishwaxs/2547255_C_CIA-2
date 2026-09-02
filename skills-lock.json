@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "llm-council": {
+      "source": "aiwithremy/claude-skills-llm-council",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "b6b68e15b1622ea5dc7760e6a3c723c62c8140103fde3052c096f7d8fc675a44"
+    }
+  }
+}

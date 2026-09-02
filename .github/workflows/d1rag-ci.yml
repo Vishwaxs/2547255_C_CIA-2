@@ -1,0 +1,84 @@
+name: D1 RAG CI
+
+on:
+  push:
+    paths:
+      - "projects/d1-rag/**"
+      - ".github/workflows/d1rag-ci.yml"
+  pull_request:
+    paths:
+      - "projects/d1-rag/**"
+      - ".github/workflows/d1rag-ci.yml"
+
+jobs:
+  backend:
+    name: backend (typecheck + tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projects/d1-rag/backend
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: d1rag
+          POSTGRES_PASSWORD: d1rag
+          POSTGRES_DB: d1rag
+        ports:
+          - 5435:5432
+        options: >-
+          --health-cmd "pg_isready -U d1rag -d d1rag"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6382:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://d1rag:d1rag@localhost:5435/d1rag?schema=public
+      REDIS_URL: redis://localhost:6382
+      PORT: 4003
+      CORS_ORIGIN: http://localhost:5176
+      EMBEDDER_KIND: tfidf
+      GENERATOR_KIND: extractive
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: projects/d1-rag/backend/package-lock.json
+
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npx prisma migrate deploy
+      - run: npm run typecheck
+      - run: npm test
+
+  frontend:
+    name: frontend (typecheck + build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projects/d1-rag/frontend
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: projects/d1-rag/frontend/package-lock.json
+
+      - run: npm ci
+      - run: npm run build

@@ -1,0 +1,70 @@
+// A1 PulseBoard data model — a real-time metrics dashboard.
+//
+//   Metric ──► Event[]    (raw ingested data points)
+//   Metric ──► Bucket[]   (per-minute rollups for historical charts)
+//   Metric ──► Alert[]    (threshold breaches)
+//
+// The live sliding-window aggregates are NOT in Postgres — they live in Redis sorted
+// sets and are pushed to dashboards over Server-Sent Events. Postgres holds the durable
+// record (raw events, rollups, alerts).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Metric {
+  id            String   @id @default(cuid())
+  name          String   @unique
+  unit          String   @default("")
+  description   String?
+  thresholdType String   @default("none") // none | max_avg | max_value | max_rate
+  thresholdValue Float?
+  createdAt     DateTime @default(now())
+  events        Event[]
+  buckets       Bucket[]
+  alerts        Alert[]
+}
+
+model Event {
+  id       String   @id @default(cuid())
+  metricId String
+  metric   Metric   @relation(fields: [metricId], references: [id], onDelete: Cascade)
+  value    Float
+  tags     Json     @default("{}")
+  ts       DateTime @default(now())
+
+  @@index([metricId, ts])
+}
+
+model Bucket {
+  id       String   @id @default(cuid())
+  metricId String
+  metric   Metric   @relation(fields: [metricId], references: [id], onDelete: Cascade)
+  minute   DateTime // start of the minute this bucket aggregates
+  count    Int
+  sum      Float
+  min      Float
+  max      Float
+
+  @@unique([metricId, minute])
+  @@index([metricId, minute])
+}
+
+model Alert {
+  id         String    @id @default(cuid())
+  metricId   String
+  metric     Metric    @relation(fields: [metricId], references: [id], onDelete: Cascade)
+  level      String // warning | critical
+  message    String
+  value      Float
+  threshold  Float
+  ts         DateTime  @default(now())
+  resolvedAt DateTime?
+
+  @@index([metricId, ts])
+}

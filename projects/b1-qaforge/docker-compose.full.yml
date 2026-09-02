@@ -1,0 +1,64 @@
+# Full local stack for QAForge: Postgres + Redis + backend + frontend.
+# Use this when a Docker daemon is available:
+#
+#   docker compose -f docker-compose.full.yml up --build
+#
+#   frontend  -> http://localhost:8081
+#   backend   -> http://localhost:4001
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: qaforge
+      POSTGRES_PASSWORD: qaforge
+      POSTGRES_DB: qaforge
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U qaforge -d qaforge"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - qaforge-pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - qaforge-redisdata:/data
+
+  backend:
+    build: ./backend
+    environment:
+      NODE_ENV: production
+      PORT: 4001
+      PUBLIC_BASE_URL: http://localhost:4001
+      DATABASE_URL: postgresql://qaforge:qaforge@postgres:5432/qaforge?schema=public
+      REDIS_URL: redis://redis:6379
+      CORS_ORIGIN: http://localhost:8081
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "4001:4001"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:4001
+    depends_on:
+      - backend
+    ports:
+      - "8081:80"
+
+volumes:
+  qaforge-pgdata:
+  qaforge-redisdata:

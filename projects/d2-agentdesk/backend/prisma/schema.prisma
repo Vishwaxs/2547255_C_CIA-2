@@ -1,0 +1,97 @@
+// D2 AgentDesk data model — a ReAct-style support-desk agent.
+//
+//   Ticket ──► AgentStep[]        the full Thought/Action/Observation trace for one run
+//
+// KnowledgeArticle and Order are the mock "world" the agent's tools act on. There is no
+// external system and no API key: the tool registry is the ONLY way the agent can affect
+// anything, and every action plus its result is persisted as an AgentStep, so a run is
+// fully auditable and replayable after the fact.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // Serverless runtimes open a connection per invocation, so DATABASE_URL points at a
+  // connection pooler in production. Migrations cannot run through a pooler in transaction
+  // mode, so they use the direct connection instead. Both fall back to DATABASE_URL locally,
+  // where there is no pooler and the two are the same host.
+  directUrl = env("DIRECT_URL")
+}
+
+model Ticket {
+  id         String   @id @default(cuid())
+  customerId String
+  subject    String
+  body       String
+  status     String   @default("open") // open | resolved | escalated
+  // Final customer-facing message (respond) or the escalation reason (escalate).
+  resolution String?
+  // Machine-readable outcome tag: answered_from_kb | refund_issued | no_order_found |
+  // refund_failed | no_kb_coverage | budget_exceeded. Drives the analytics rollup without
+  // re-parsing prose.
+  outcome    String?
+  // Denormalized AgentStep count so list views never need a join or a _count include.
+  stepCount  Int      @default(0)
+  // Wall-clock duration of the agent run in milliseconds, recorded on the terminal step.
+  runtimeMs  Int?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  steps AgentStep[]
+
+  @@index([status, createdAt])
+  @@index([customerId])
+  @@index([outcome])
+}
+
+model AgentStep {
+  id       String @id @default(cuid())
+  ticketId String
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  // 1-based position within this ticket's run.
+  stepNumber  Int
+  // The planner's stated reasoning for choosing this action — the "Thought".
+  thought     String
+  // A registered tool name (search_kb | lookup_order | issue_refund) or a terminal
+  // action (respond | escalate). Deliberately a plain string, not an enum: the tool
+  // registry is extensible at runtime and the trace must survive tools being added.
+  action      String
+  // Input handed to the tool, or { message } / { reason } for terminal actions.
+  actionInput Json
+  // The tool's { ok, summary, data } result — the "Observation".
+  observation Json
+  // How long this single step took, in milliseconds.
+  durationMs  Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  // The unique constraint already creates a btree on exactly these columns in this order,
+  // which serves the ordered per-ticket trace read. A separate @@index would be a second
+  // identical tree, doubling write cost on the hottest insert path for no read benefit.
+  @@unique([ticketId, stepNumber])
+}
+
+model KnowledgeArticle {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  tags      Json     @default("[]") // string[]
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model Order {
+  id         String    @id @default(cuid())
+  customerId String
+  product    String
+  amount     Float
+  status     String    @default("placed") // placed | refunded
+  placedAt   DateTime  @default(now())
+  refundedAt DateTime?
+
+  @@index([customerId, status])
+}

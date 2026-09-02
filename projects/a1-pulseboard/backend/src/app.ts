@@ -1,0 +1,27 @@
+import express from 'express';
+import cors from 'cors';
+import { env } from './config/env';
+import { healthRouter } from './routes/health.routes';
+import { metricsRouter } from './routes/metrics.routes';
+import { eventsRouter } from './routes/events.routes';
+import { streamRouter } from './stream/stream.routes';
+import { alertsRouter } from './routes/alerts.routes';
+import { simulatorRouter } from './routes/simulator.routes';
+import { notFound, errorHandler } from './middleware/errorHandler';
+
+export function createApp(): express.Express {
+  const app = express();
+  app.set('trust proxy', 1);
+  app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
+  app.use(express.json({ limit: '512kb' }));
+
+  app.use('/healthz', healthRouter);
+  app.use('/api/metrics', metricsRouter);
+  app.use('/api/events', eventsRouter);
+  app.use('/api/stream', streamRouter);
+  app.use('/api/alerts', alertsRouter);
+  app.use('/api/simulator', simulatorRouter);
+  app.use(notFound);
+  app.use(errorHandler);
+  return app;
+}

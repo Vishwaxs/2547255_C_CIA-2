@@ -1,0 +1,72 @@
+// A3 Hooky data model — a webhook gateway / dispatcher.
+//
+//   Subscription (endpoint + event types + secret + mode)
+//   Event ──► Delivery[]  (one per matching subscription)
+//   Delivery ──► DeliveryAttempt[]  (one per send attempt, with backoff between them)
+//
+// Delivery targets are reached through a DeliveryTransport interface — a deterministic
+// offline sink here (per-subscription mode), a real fetch transport in production.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Subscription {
+  id          String     @id @default(cuid())
+  name        String
+  endpoint    String
+  eventTypes  Json       @default("[\"*\"]") // string[] of event types, or ["*"] for all
+  secret      String // HMAC signing secret
+  mode        String     @default("ok") // ok | flaky | fail | slow (drives the sink transport)
+  active      Boolean    @default(true)
+  maxAttempts Int        @default(5)
+  createdAt   DateTime   @default(now())
+  deliveries  Delivery[]
+}
+
+model Event {
+  id             String     @id @default(cuid())
+  type           String
+  payload        Json       @default("{}")
+  idempotencyKey String?
+  createdAt      DateTime   @default(now())
+  deliveries     Delivery[]
+
+  @@index([type])
+}
+
+model Delivery {
+  id             String            @id @default(cuid())
+  eventId        String
+  event          Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  subscriptionId String
+  subscription   Subscription      @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  status         String            @default("pending") // pending | delivering | delivered | retrying | dead
+  attempts       Int               @default(0)
+  nextAttemptAt  DateTime          @default(now())
+  lastError      String?
+  deliveredAt    DateTime?
+  createdAt      DateTime          @default(now())
+  attemptLog     DeliveryAttempt[]
+
+  @@index([status, nextAttemptAt])
+}
+
+model DeliveryAttempt {
+  id         String   @id @default(cuid())
+  deliveryId String
+  delivery   Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  attempt    Int
+  statusCode Int?
+  ok         Boolean
+  durationMs Int
+  error      String?
+  at         DateTime @default(now())
+
+  @@index([deliveryId])
+}

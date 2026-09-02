@@ -1,0 +1,83 @@
+name: A1 PulseBoard CI
+
+on:
+  push:
+    paths:
+      - "projects/a1-pulseboard/**"
+      - ".github/workflows/a1pulseboard-ci.yml"
+  pull_request:
+    paths:
+      - "projects/a1-pulseboard/**"
+      - ".github/workflows/a1pulseboard-ci.yml"
+
+jobs:
+  backend:
+    name: backend (typecheck + tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projects/a1-pulseboard/backend
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: pulseboard
+          POSTGRES_PASSWORD: pulseboard
+          POSTGRES_DB: pulseboard
+        ports:
+          - 5437:5432
+        options: >-
+          --health-cmd "pg_isready -U pulseboard -d pulseboard"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6384:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://pulseboard:pulseboard@localhost:5437/pulseboard?schema=public
+      REDIS_URL: redis://localhost:6384
+      PORT: 4005
+      CORS_ORIGIN: http://localhost:5178
+      START_STREAM: "false"
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: projects/a1-pulseboard/backend/package-lock.json
+
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npx prisma migrate deploy
+      - run: npm run typecheck
+      - run: npm test
+
+  frontend:
+    name: frontend (typecheck + build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projects/a1-pulseboard/frontend
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: projects/a1-pulseboard/frontend/package-lock.json
+
+      - run: npm ci
+      - run: npm run build

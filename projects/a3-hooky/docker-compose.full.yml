@@ -1,0 +1,66 @@
+# Full local stack for A3 Hooky: Postgres + Redis + backend + frontend.
+# Use this when a Docker daemon is available:
+#
+#   docker compose -f docker-compose.full.yml up --build
+#
+#   frontend  -> http://localhost:8086
+#   backend   -> http://localhost:4006
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: hooky
+      POSTGRES_PASSWORD: hooky
+      POSTGRES_DB: hooky
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hooky -d hooky"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - hooky-pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - hooky-redisdata:/data
+
+  backend:
+    build: ./backend
+    environment:
+      NODE_ENV: production
+      PORT: 4006
+      PUBLIC_BASE_URL: http://localhost:4006
+      DATABASE_URL: postgresql://hooky:hooky@postgres:5432/hooky?schema=public
+      REDIS_URL: redis://redis:6379
+      CORS_ORIGIN: http://localhost:8086
+      START_WORKER: "true"
+      TRANSPORT: sink
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "4006:4006"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:4006
+    depends_on:
+      - backend
+    ports:
+      - "8086:80"
+
+volumes:
+  hooky-pgdata:
+  hooky-redisdata:

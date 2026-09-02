@@ -1,0 +1,39 @@
+# Dev infra only: Postgres + Redis.
+# Run backend and frontend on the host with `npm run dev`.
+# For the full stack in Docker, use docker-compose.full.yml.
+#
+#   docker compose up -d
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: pulseboard
+      POSTGRES_PASSWORD: pulseboard
+      POSTGRES_DB: pulseboard
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pulseboard -d pulseboard"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "5437:5432"
+    volumes:
+      - pulseboard-pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    ports:
+      - "6384:6379"
+    volumes:
+      - pulseboard-redisdata:/data
+
+volumes:
+  pulseboard-pgdata:
+  pulseboard-redisdata:

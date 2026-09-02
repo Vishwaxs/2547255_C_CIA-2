@@ -1,0 +1,101 @@
+// SyncBridge data model — a mini-iPaaS integration hub.
+//
+//   Connector ──┐ (source)        Connector ──┐ (target)
+//               └──► SyncFlow ◄────────────────┘
+//                       │  FieldMapping[]  (declarative source→target rules)
+//                       │  SyncRun[]       (one per execution)
+//                       └──► SyncRun ──► AuditEntry[]  (one per record action)
+//
+// ExternalRecord rows simulate the data living inside each connected system.
+// A real connector would hit HubSpot/Sheets/Slack over OAuth instead.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Connector {
+  id        String   @id @default(cuid())
+  name      String
+  kind      String // "mock_crm" | "mock_sheet" | "mock_slack"
+  config    Json     @default("{}")
+  createdAt DateTime @default(now())
+
+  records      ExternalRecord[]
+  sourceFlows  SyncFlow[]       @relation("SourceConnector")
+  targetFlows  SyncFlow[]       @relation("TargetConnector")
+}
+
+// The data held inside a connected system. Keyed by (connector, externalId).
+model ExternalRecord {
+  id          String    @id @default(cuid())
+  connectorId String
+  connector   Connector @relation(fields: [connectorId], references: [id], onDelete: Cascade)
+  externalId  String
+  data        Json
+  updatedAt   DateTime  @default(now()) @updatedAt
+
+  @@unique([connectorId, externalId])
+}
+
+model SyncFlow {
+  id                String   @id @default(cuid())
+  name              String
+  sourceConnectorId String
+  sourceConnector   Connector @relation("SourceConnector", fields: [sourceConnectorId], references: [id], onDelete: Cascade)
+  targetConnectorId String
+  targetConnector   Connector @relation("TargetConnector", fields: [targetConnectorId], references: [id], onDelete: Cascade)
+  schedule          String? // cron expression, or null for manual/event-only
+  enabled           Boolean  @default(true)
+  conflictStrategy  String   @default("source_wins") // source_wins | target_wins | newest_wins
+  lastSyncedAt      DateTime?
+  createdAt         DateTime @default(now())
+
+  mappings FieldMapping[]
+  runs     SyncRun[]
+}
+
+model FieldMapping {
+  id          String   @id @default(cuid())
+  flowId      String
+  flow        SyncFlow @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  sourceField String
+  targetField String
+  transform   String   @default("none") // none | uppercase | lowercase | trim | number | date_iso
+  createdAt   DateTime @default(now())
+}
+
+model SyncRun {
+  id          String    @id @default(cuid())
+  flowId      String
+  flow        SyncFlow  @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  trigger     String    @default("manual") // manual | scheduled | event
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  status      String    @default("running") // running | success | partial | failed
+
+  recordsRead      Int @default(0)
+  recordsUpserted  Int @default(0)
+  recordsSkipped   Int @default(0)
+  recordsConflicted Int @default(0)
+
+  entries AuditEntry[]
+}
+
+model AuditEntry {
+  id            String   @id @default(cuid())
+  syncRunId     String
+  syncRun       SyncRun  @relation(fields: [syncRunId], references: [id], onDelete: Cascade)
+  externalId    String
+  action        String // created | updated | skipped | conflict_resolved | failed
+  sourcePayload Json
+  mappedPayload Json
+  detail        String?
+  createdAt     DateTime @default(now())
+
+  @@index([syncRunId])
+}
